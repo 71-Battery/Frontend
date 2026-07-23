@@ -27,6 +27,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
+import { logout as logoutWithBackend } from './api/authApi.js'
 import { mockLogout } from './api/mockAuthApi.js'
 import {
   createAdminRule,
@@ -122,7 +123,7 @@ function SourceBadges({ meta = {}, demo = false }) {
   )
 }
 
-function DashboardHeader({ user, profileMeta, onLogout }) {
+function DashboardHeader({ user, profileMeta, onLogout, loggingOut = false }) {
   return (
     <header className="dashboard-header">
       <Brand />
@@ -141,7 +142,15 @@ function DashboardHeader({ user, profileMeta, onLogout }) {
           </span>
           <SourceBadges meta={profileMeta} demo={user.dataSource === 'demo'} />
         </div>
-        <button className="icon-action" type="button" onClick={onLogout} aria-label="로그인 화면으로"><LogOut size={18} /></button>
+        <button
+          className="icon-action"
+          type="button"
+          onClick={onLogout}
+          aria-label={loggingOut ? '로그아웃 처리 중' : '로그아웃'}
+          disabled={loggingOut}
+        >
+          {loggingOut ? <LoaderCircle className="spin" size={18} /> : <LogOut size={18} />}
+        </button>
       </div>
     </header>
   )
@@ -1022,7 +1031,7 @@ function PrimaryNavigation({ activeView, onChange, savedCount }) {
   )
 }
 
-function MainDashboard({ session, onLogout }) {
+function MainDashboard({ session, onLogout, loggingOut = false }) {
   const { user, token: authToken, permissions, meta: profileMeta } = session
   const [activeView, setActiveView] = useState('home')
   const [focusedResource, setFocusedResource] = useState(null)
@@ -1051,7 +1060,12 @@ function MainDashboard({ session, onLogout }) {
     <div className="dashboard-shell">
       <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
       <a className="skip-link" href="#main-content">본문으로 바로가기</a>
-      <DashboardHeader user={user} profileMeta={profileMeta} onLogout={onLogout} />
+      <DashboardHeader
+        user={user}
+        profileMeta={profileMeta}
+        onLogout={onLogout}
+        loggingOut={loggingOut}
+      />
       <main className="dashboard-main" id="main-content">
         <PrimaryNavigation activeView={activeView} onChange={setActiveView} savedCount={savedCount} />
         {academic.saveError && <div className="global-data-error" role="alert"><CircleAlert size={16} />{academic.saveError}</div>}
@@ -1124,6 +1138,7 @@ function MainDashboard({ session, onLogout }) {
 
 function App() {
   const [session, setSession] = useState(null)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   function handleAuthenticated(authenticated) {
     setSession({
@@ -1137,12 +1152,31 @@ function App() {
   }
 
   async function handleLogout() {
-    if (session?.user?.dataSource === 'demo') await mockLogout()
-    setSession(null)
+    if (loggingOut) return
+
+    setLoggingOut(true)
+    try {
+      if (session?.user?.dataSource === 'demo') {
+        await mockLogout()
+      } else if (session?.token) {
+        await logoutWithBackend({ authToken: session.token })
+      }
+    } catch {
+      // Always remove the browser-held token, even if the provider is offline.
+    } finally {
+      setSession(null)
+      setLoggingOut(false)
+    }
   }
 
   if (!session) return <AuthPage onAuthenticated={handleAuthenticated} />
-  return <MainDashboard session={session} onLogout={handleLogout} />
+  return (
+    <MainDashboard
+      session={session}
+      onLogout={handleLogout}
+      loggingOut={loggingOut}
+    />
+  )
 }
 
 export default App

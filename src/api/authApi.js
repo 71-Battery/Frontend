@@ -5,6 +5,7 @@ import { getProfile } from './platformApi.js'
 export const AUTH_ENDPOINTS = {
   login: '/api/auth/login',
   signup: '/api/auth/signup',
+  logout: '/api/auth/logout',
 }
 
 function getAccessToken(data) {
@@ -93,4 +94,13 @@ export async function signup(account) {
     },
   })
   return hydrateAuthenticatedProfile(payload)
+}
+
+export async function logout({ authToken, signal } = {}) {
+  return apiRequest(AUTH_ENDPOINTS.logout, {
+    method: 'POST',
+    authToken,
+    signal,
+    timeoutMs: 30000,
+  })
 }
