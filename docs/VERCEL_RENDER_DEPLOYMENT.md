@@ -79,7 +79,8 @@ readiness 서버를 실행할 때만 이 값을 서버 환경변수로 설정합
 Blueprint에는 다음 값이 이미 고정되어 있습니다.
 
 - Root Directory: `backend`
-- Build Command: `npm ci && npm run build`
+- Build Command:
+  `npm ci --include=dev && npm run build && npm prune --omit=dev`
 - Start Command: `node dist/main.js`
 - Health Check: `/api/health`
 - Node: `22.14.0`
