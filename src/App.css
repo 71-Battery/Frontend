@@ -310,16 +310,6 @@
 .overview-links strong { overflow: hidden; color: var(--text); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .overview-links small { overflow: hidden; color: var(--text-faint); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .overview-links > button > svg { color: #a3aab6; }
-.overview-source {
-  display: flex;
-  margin: auto 0 0;
-  padding-top: 18px;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-faint);
-  font-size: 8px;
-  gap: 5px;
-}
 
 .chat-panel { display: flex; min-width: 0; padding: 30px; flex-direction: column; }
 .chat-heading { display: flex; align-items: center; gap: 14px; }
@@ -832,18 +822,6 @@
 .notice-row-main > p { overflow: hidden; margin: 0; color: var(--text-soft); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .notice-source { display: flex; align-items: center; color: var(--text-faint); font-size: 9px; gap: 5px; }
 
-.notice-detail .prototype-disclaimer {
-  display: flex;
-  margin: 0;
-  align-items: flex-start;
-  color: var(--text-faint);
-  font-size: 8px;
-  font-weight: 500;
-  line-height: 1.55;
-  gap: 6px;
-}
-.prototype-disclaimer svg { flex: 0 0 auto; }
-
 .saved-panel { min-height: 420px; }
 .saved-grid { display: grid; margin-top: 16px; gap: 10px; }
 .saved-card {
@@ -983,7 +961,6 @@
   }
   .priority-date { height: 46px; }
   .overview-priority > button { width: 38px; height: 38px; }
-  .overview-source { line-height: 1.5; text-align: center; }
   .chat-empty { padding: 35px 0; }
   .message { max-width: 92%; }
   .answer-sources button { grid-template-columns: auto minmax(0, 1fr); }

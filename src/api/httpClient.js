@@ -163,7 +163,7 @@ export async function apiRequest(path, {
   } catch (error) {
     if (error.name === 'AbortError' && signal?.aborted) throw error
     if (error.name === 'AbortError') throw new ApiError('요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.', { code: 'REQUEST_TIMEOUT' })
-    throw new ApiError('백엔드 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+    throw new ApiError('서비스에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.')
   } finally {
     window.clearTimeout(timeoutId)
     signal?.removeEventListener('abort', abortFromCaller)

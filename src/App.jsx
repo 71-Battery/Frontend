@@ -103,7 +103,6 @@ function SourceBadges({ meta = {}, demo = false }) {
       {demo && <small className="source-badge demo">DEMO</small>}
       {!demo && meta.fallback && <small className="source-badge warning">로컬 프로필</small>}
       {!demo && !meta.fallback && source.includes('DATA') && <small className="source-badge">Data-GSM</small>}
-      {!demo && source.includes('INTERNAL') && <small className="source-badge">내부 DB</small>}
       {!demo && source.includes('USER') && <small className="source-badge">사용자 저장</small>}
       {meta.stale && <small className="source-badge warning">업데이트 지연</small>}
     </span>
@@ -436,7 +435,6 @@ function DashboardOverview({
           <ArrowRight size={16} />
         </button>
       </div>
-      <p className="overview-source"><ShieldCheck size={13} /> 프로필, 일정, 공지와 규정은 인증된 사용자 기준으로 백엔드에서 제공됩니다.</p>
     </section>
   )
 }
@@ -592,7 +590,7 @@ function NoticesView({
       <ViewHeading
         eyebrow="NOTICE & RULES"
         title="공지·규정"
-        description="내부 데이터베이스에서 게시된 공지와 규정을 한곳에서 찾습니다."
+        description="게시된 공지와 규정을 한곳에서 찾습니다."
         meta={meta}
         demo={isDemo}
       />
@@ -656,7 +654,6 @@ function NoticesView({
               <div><dt>버전</dt><dd>v{selected.version}</dd></div>
             </dl>
             <div className="detail-tip"><Sparkles size={17} /><span><strong>추천 이유</strong>{selected.reason}</span></div>
-            <p className="prototype-disclaimer"><ShieldCheck size={14} /> 백엔드가 제공한 게시 정보이며 중요한 내용은 학교 원문을 함께 확인하세요.</p>
           </aside>
         ) : (
           <aside className="detail-panel glass-panel reveal">
