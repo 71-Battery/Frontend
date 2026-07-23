@@ -84,6 +84,23 @@ export function getSchedulesForPage(schedules, pageIndex) {
     .filter((schedule) => getSchedulePageIndex(schedule) === pageIndex)
 }
 
+export function getHomeAgenda(schedules, maximumItems = 3) {
+  const limit = Number.isInteger(maximumItems) && maximumItems > 0 ? maximumItems : 3
+  const upcoming = (Array.isArray(schedules) ? schedules : [])
+    .filter((schedule) => Number.isInteger(schedule?.ddayValue) && schedule.ddayValue >= 0)
+    .sort((left, right) => (
+      left.ddayValue - right.ddayValue
+      || String(left.scheduleDate || '').localeCompare(String(right.scheduleDate || ''))
+      || String(left.title || '').localeCompare(String(right.title || ''), 'ko')
+    ))
+    .slice(0, limit)
+
+  return {
+    today: upcoming.filter((schedule) => schedule.ddayValue === 0),
+    upcoming: upcoming.filter((schedule) => schedule.ddayValue > 0),
+  }
+}
+
 export function formatTargetGrades(targetGrades) {
   const grades = normalizeGrades(targetGrades)
   if (!grades.length) return '대상 정보 없음'

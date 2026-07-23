@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   getDefaultScheduleRange,
+  getHomeAgenda,
   getSchedulePageCount,
   getSchedulePageIndex,
   getSchedulesForPage,
@@ -17,6 +18,19 @@ test('uses a 90-day inclusive range in Asia/Seoul', () => {
       toDate: '2026-10-20',
     },
   )
+})
+
+test('keeps only today and the nearest upcoming schedules for the home agenda', () => {
+  const agenda = getHomeAgenda([
+    { id: 'past', ddayValue: -1, scheduleDate: '2026-07-23', title: '지난 일정' },
+    { id: 'later', ddayValue: 6, scheduleDate: '2026-07-30', title: '나중 일정' },
+    { id: 'today-two', ddayValue: 0, scheduleDate: '2026-07-24', title: '오늘 일정 B' },
+    { id: 'soon', ddayValue: 2, scheduleDate: '2026-07-26', title: '가까운 일정' },
+    { id: 'today-one', ddayValue: 0, scheduleDate: '2026-07-24', title: '오늘 일정 A' },
+  ], 3)
+
+  assert.deepEqual(agenda.today.map((schedule) => schedule.id), ['today-one', 'today-two'])
+  assert.deepEqual(agenda.upcoming.map((schedule) => schedule.id), ['soon'])
 })
 
 test('splits schedules into 30-day pages with a 90-day maximum', () => {

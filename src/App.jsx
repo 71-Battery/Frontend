@@ -72,6 +72,7 @@ import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourc
 import { buildCalendarMonth, getCalendarMonths } from './api/calendarMapper.js'
 import {
   getDefaultScheduleRange,
+  getHomeAgenda,
   getSchedulePageCount,
   getSchedulePageIndex,
   getSchedulesForPage,
@@ -452,10 +453,47 @@ function ChatPanel({ user, authToken, onSourceSelect, onAnswerReady }) {
   )
 }
 
-function GuidancePanel({ user, authToken, onSourceSelect }) {
+function AgendaGroup({ label, items, onNavigate, tone }) {
+  if (!items.length) return null
+
+  return (
+    <div className={`agenda-group ${tone}`}>
+      <div className="agenda-group-heading">
+        <span>{label}</span>
+        <small>{items.length}개</small>
+      </div>
+      <div className="agenda-list">
+        {items.map((schedule) => (
+          <button type="button" key={schedule.id} onClick={() => onNavigate('timeline')}>
+            <span className="agenda-date">
+              <strong>{schedule.ddayValue === 0 ? '오늘' : schedule.dday}</strong>
+              <small>{schedule.month} {schedule.date}일</small>
+            </span>
+            <span className="agenda-copy">
+              <strong>{schedule.title}</strong>
+              <small>{schedule.category} · {schedule.target}</small>
+            </span>
+            <ChevronRight size={15} />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GuidancePanel({
+  user,
+  authToken,
+  schedules,
+  scheduleStatus,
+  onNavigate,
+  onSourceSelect,
+}) {
   const [guide, setGuide] = useState(user.dataSource === 'demo' ? demoGuide : null)
   const [status, setStatus] = useState(user.dataSource === 'demo' ? 'ready' : 'loading')
   const [error, setError] = useState('')
+  const agenda = getHomeAgenda(schedules, 3)
+  const hasAgenda = agenda.today.length > 0 || agenda.upcoming.length > 0
 
   const loadGuide = useCallback(async (signal) => {
     if (user.dataSource === 'demo') {
@@ -487,9 +525,31 @@ function GuidancePanel({ user, authToken, onSourceSelect }) {
   }, [loadGuide])
 
   return (
-    <aside className="guidance-panel glass-panel reveal" aria-labelledby="guide-title">
+    <aside className="guidance-panel glass-panel reveal" aria-labelledby="agenda-title">
       <div className="panel-heading">
-        <div><p>나에게 필요한 내용만</p><h2 id="guide-title">맞춤 학사 가이드</h2></div>
+        <div><p>TODAY &amp; NEXT</p><h2 id="agenda-title">오늘 확인할 내용</h2></div>
+        <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 타임라인 전체 보기"><ArrowRight size={17} /></button>
+      </div>
+      <div className="home-agenda">
+        {scheduleStatus === 'loading' ? (
+          <div className="agenda-state" role="status">
+            <LoaderCircle className="spin" size={19} />
+            <span>오늘과 다가오는 일정을 확인하고 있어요.</span>
+          </div>
+        ) : hasAgenda ? (
+          <>
+            <AgendaGroup label="오늘" items={agenda.today} onNavigate={onNavigate} tone="today" />
+            <AgendaGroup label="다가오는 일정" items={agenda.upcoming} onNavigate={onNavigate} tone="upcoming" />
+          </>
+        ) : (
+          <div className="agenda-state empty">
+            <CalendarDays size={19} />
+            <span>오늘과 앞으로 예정된 일정이 없어요.</span>
+          </div>
+        )}
+      </div>
+      <div className="guide-section-heading">
+        <div><p>PERSONALIZED</p><h3 id="guide-title">맞춤 학사 가이드</h3></div>
         <button type="button" onClick={() => loadGuide()} disabled={status === 'loading'} aria-label="가이드 새로고침"><RefreshCw className={status === 'loading' ? 'spin' : ''} size={17} /></button>
       </div>
       <div className="student-context">
@@ -583,7 +643,8 @@ function DashboardOverview({
   onNavigate,
   savedCount,
 }) {
-  const nextSchedule = schedules.find((item) => item.ddayValue >= 0) || schedules[0] || null
+  const overviewAgenda = getHomeAgenda(schedules, 1)
+  const nextSchedule = overviewAgenda.today[0] || overviewAgenda.upcoming[0] || null
   const latestNotice = contentItems[0] || null
 
   return (
@@ -1324,7 +1385,14 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
                 onNavigate={setActiveView}
                 savedCount={savedCount}
               />
-              <GuidancePanel user={user} authToken={authToken} onSourceSelect={handleSourceSelect} />
+              <GuidancePanel
+                user={user}
+                authToken={authToken}
+                schedules={academic.schedules.items}
+                scheduleStatus={academic.schedules.status}
+                onNavigate={setActiveView}
+                onSourceSelect={handleSourceSelect}
+              />
             </div>
           )}
           <div className="single-view" hidden={activeView !== 'chat'}>
