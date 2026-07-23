@@ -1,3 +1,31 @@
+.session-restore-screen {
+  display: grid;
+  min-height: 100dvh;
+  padding: 24px;
+  color: var(--text);
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(115, 135, 244, 0.12), transparent 22rem),
+    var(--canvas);
+  place-content: center;
+  justify-items: center;
+  gap: 9px;
+}
+.session-restore-screen > span {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 5px;
+  color: var(--accent);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  box-shadow: 0 15px 34px rgba(42, 54, 89, 0.11);
+  place-items: center;
+}
+.session-restore-screen strong { font-size: 15px; }
+.session-restore-screen p { margin: 0; color: var(--text-soft); font-size: 11px; }
+
 .dashboard-shell {
   position: relative;
   min-height: 100vh;

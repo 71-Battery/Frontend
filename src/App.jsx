@@ -45,9 +45,15 @@ import { mockLogout } from './api/mockAuthApi.js'
 import {
   createAdminRule,
   getAdminRules,
+  getProfile,
   requestGuidance,
   sendChat,
 } from './api/platformApi.js'
+import {
+  clearSession as clearStoredSession,
+  readSession as readStoredSession,
+  saveSession as saveStoredSession,
+} from './api/sessionStore.js'
 import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourceMapper.js'
 import { buildCalendarMonth, getCalendarMonths } from './api/calendarMapper.js'
 import {
@@ -1156,10 +1162,31 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   )
 }
 
+function isStoredAuthenticationError(error) {
+  return error?.status === 401 || [
+    'UNAUTHORIZED',
+    'INVALID_TOKEN',
+    'INVALID_AUTH_IDENTITY',
+  ].includes(error?.code)
+}
+
+function SessionRestoreScreen() {
+  return (
+    <main className="session-restore-screen" role="status" aria-live="polite">
+      <span><LoaderCircle className="spin" size={24} /></span>
+      <strong>로그인 상태를 확인하고 있어요</strong>
+      <p>잠시만 기다려 주세요.</p>
+    </main>
+  )
+}
+
 function App({ initialRoute = { kind: 'app' } }) {
   const [session, setSession] = useState(null)
   const [loggingOut, setLoggingOut] = useState(false)
   const [confirmationStatus, setConfirmationStatus] = useState('checking')
+  const [sessionStatus, setSessionStatus] = useState(
+    initialRoute.kind === 'email-confirmation' ? 'ready' : 'restoring',
+  )
 
   useEffect(() => {
     if (initialRoute.kind !== 'email-confirmation') return undefined
@@ -1177,21 +1204,78 @@ function App({ initialRoute = { kind: 'app' } }) {
     return () => controller.abort()
   }, [initialRoute])
 
+  useEffect(() => {
+    if (initialRoute.kind === 'email-confirmation') return undefined
+
+    const storedSession = readStoredSession()
+    if (!storedSession) {
+      setSessionStatus('ready')
+      return undefined
+    }
+
+    if (storedSession.user.dataSource === 'demo') {
+      setSession(storedSession)
+      setSessionStatus('ready')
+      return undefined
+    }
+
+    const controller = new AbortController()
+    let active = true
+    getProfile({
+      authToken: storedSession.token,
+      signal: controller.signal,
+    })
+      .then((profileResponse) => {
+        if (!active) return
+        const restoredSession = {
+          user: profileResponse.profile,
+          token: storedSession.token,
+          permissions: profileResponse.permissions,
+          meta: profileResponse.meta,
+        }
+        saveStoredSession(restoredSession)
+        setSession(restoredSession)
+      })
+      .catch((error) => {
+        if (!active || controller.signal.aborted) return
+        if (isStoredAuthenticationError(error)) {
+          clearStoredSession()
+          setSession(null)
+          return
+        }
+
+        // Keep a validated local snapshot during a temporary backend cold
+        // start. Protected requests still verify the token on the backend.
+        setSession(storedSession)
+      })
+      .finally(() => {
+        if (active) setSessionStatus('ready')
+      })
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [initialRoute.kind])
+
   function handleAuthenticated(authenticated) {
-    setSession({
+    const nextSession = {
       user: authenticated.user,
       token: authenticated.token || '',
       permissions: {
         canManageContent: authenticated.permissions?.canManageContent === true,
       },
       meta: authenticated.meta || {},
-    })
+    }
+    saveStoredSession(nextSession)
+    setSession(nextSession)
   }
 
   async function handleLogout() {
     if (loggingOut) return
 
     setLoggingOut(true)
+    clearStoredSession()
     try {
       if (session?.user?.dataSource === 'demo') {
         await mockLogout()
@@ -1209,6 +1293,7 @@ function App({ initialRoute = { kind: 'app' } }) {
   if (initialRoute.kind === 'email-confirmation') {
     return <EmailConfirmationPage status={confirmationStatus} />
   }
+  if (sessionStatus === 'restoring') return <SessionRestoreScreen />
   if (!session) return <AuthPage onAuthenticated={handleAuthenticated} />
   return (
     <MainDashboard
