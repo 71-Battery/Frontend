@@ -7,11 +7,14 @@ import {
   BookOpenText,
   CalendarDays,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   CircleAlert,
   GraduationCap,
   House,
   LoaderCircle,
+  List as ListIcon,
   LogOut,
   Megaphone,
   MessageCircleQuestion,
@@ -32,10 +35,13 @@ import {
   sendChat,
 } from './api/platformApi.js'
 import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourceMapper.js'
+import { buildCalendarMonth, getCalendarMonths } from './api/calendarMapper.js'
 import {
+  getDefaultScheduleRange,
   getSchedulePageCount,
   getSchedulePageIndex,
   getSchedulesForPage,
+  isStrictScheduleDate,
   SCHEDULE_PAGE_DAYS,
   SCHEDULE_WINDOW_DAYS,
 } from './api/scheduleMapper.js'
@@ -461,16 +467,33 @@ function TimelineView({
 }) {
   const [selectedId, setSelectedId] = useState(null)
   const [pageIndex, setPageIndex] = useState(0)
+  const [viewMode, setViewMode] = useState('list')
+  const [calendarMonthIndex, setCalendarMonthIndex] = useState(0)
   const pageCount = useMemo(() => getSchedulePageCount(events), [events])
   const pageEvents = useMemo(() => getSchedulesForPage(events, pageIndex), [events, pageIndex])
+  const fallbackRange = useMemo(() => getDefaultScheduleRange(), [])
+  const rangeStart = isStrictScheduleDate(meta?.fromDate) ? meta.fromDate : fallbackRange.fromDate
+  const rangeEnd = isStrictScheduleDate(meta?.toDate) ? meta.toDate : fallbackRange.toDate
+  const calendarMonths = useMemo(() => getCalendarMonths(rangeStart, rangeEnd), [rangeEnd, rangeStart])
+  const calendarMonth = calendarMonths[calendarMonthIndex] || calendarMonths[0] || null
+  const calendarCells = useMemo(
+    () => buildCalendarMonth(calendarMonth, rangeStart, rangeEnd, events),
+    [calendarMonth, events, rangeEnd, rangeStart],
+  )
+  const calendarMonthEvents = useMemo(
+    () => events.filter((event) => event.scheduleDate.startsWith(`${calendarMonth?.key || 'none'}-`)),
+    [calendarMonth, events],
+  )
 
   useEffect(() => {
     const focusedEvent = events.find((event) => event.id === selectedResourceId)
     const focusedPageIndex = getSchedulePageIndex(focusedEvent)
     if (focusedPageIndex < 0) return
     setPageIndex(focusedPageIndex)
+    const focusedMonthIndex = calendarMonths.findIndex((month) => focusedEvent.scheduleDate.startsWith(`${month.key}-`))
+    if (focusedMonthIndex >= 0) setCalendarMonthIndex(focusedMonthIndex)
     setSelectedId(focusedEvent.id)
-  }, [events, selectedResourceId])
+  }, [calendarMonths, events, selectedResourceId])
 
   useEffect(() => {
     if (pageIndex < pageCount) return
@@ -478,18 +501,56 @@ function TimelineView({
   }, [pageCount, pageIndex])
 
   useEffect(() => {
+    if (viewMode !== 'list') return
     setSelectedId((current) => (
-      current && pageEvents.some((event) => event.id === current)
+      selectedResourceId && pageEvents.some((event) => event.id === selectedResourceId)
+        ? selectedResourceId
+        : current && pageEvents.some((event) => event.id === current)
         ? current
         : pageEvents[0]?.id || null
     ))
-  }, [pageEvents])
+  }, [pageEvents, selectedResourceId, viewMode])
 
-  const selected = pageEvents.find((event) => event.id === selectedId) || null
+  useEffect(() => {
+    if (calendarMonthIndex < calendarMonths.length) return
+    setCalendarMonthIndex(Math.max(0, calendarMonths.length - 1))
+  }, [calendarMonthIndex, calendarMonths.length])
+
+  useEffect(() => {
+    if (viewMode !== 'calendar') return
+    setSelectedId((current) => (
+      selectedResourceId && calendarMonthEvents.some((event) => event.id === selectedResourceId)
+        ? selectedResourceId
+        : current && calendarMonthEvents.some((event) => event.id === current)
+        ? current
+        : calendarMonthEvents[0]?.id || null
+    ))
+  }, [calendarMonthEvents, selectedResourceId, viewMode])
+
+  const selected = events.find((event) => event.id === selectedId) || null
 
   function selectPage(nextPageIndex) {
     setPageIndex(nextPageIndex)
     setSelectedId(getSchedulesForPage(events, nextPageIndex)[0]?.id || null)
+  }
+
+  function selectCalendarMonth(nextMonthIndex) {
+    const nextMonth = calendarMonths[nextMonthIndex]
+    if (!nextMonth) return
+    setCalendarMonthIndex(nextMonthIndex)
+    setSelectedId(events.find((event) => event.scheduleDate.startsWith(`${nextMonth.key}-`))?.id || null)
+  }
+
+  function changeViewMode(nextMode) {
+    setViewMode(nextMode)
+    if (!selected) return
+    if (nextMode === 'list') {
+      const selectedPageIndex = getSchedulePageIndex(selected)
+      if (selectedPageIndex >= 0) setPageIndex(selectedPageIndex)
+      return
+    }
+    const selectedMonthIndex = calendarMonths.findIndex((month) => selected.scheduleDate.startsWith(`${month.key}-`))
+    if (selectedMonthIndex >= 0) setCalendarMonthIndex(selectedMonthIndex)
   }
 
   return (
@@ -504,13 +565,31 @@ function TimelineView({
       <div className="timeline-layout">
         <section className="timeline-panel glass-panel reveal" aria-label="학사 일정 목록">
           <div className="content-panel-heading">
-            <div><strong>다가오는 일정</strong><span>{SCHEDULE_PAGE_DAYS}일씩 나누어 가까운 순서로 정리했어요.</span></div>
-            <CalendarDays size={19} />
+            <div>
+              <strong>다가오는 일정</strong>
+              <span>{viewMode === 'list' ? `${SCHEDULE_PAGE_DAYS}일씩 나누어 가까운 순서로 정리했어요.` : '월별 달력에서 날짜와 일정을 확인하세요.'}</span>
+            </div>
+            <div className="timeline-view-toggle" role="group" aria-label="학사 일정 보기 방식">
+              <button className={viewMode === 'list' ? 'active' : ''} type="button" onClick={() => changeViewMode('list')} aria-pressed={viewMode === 'list'}>
+                <ListIcon size={14} />목록으로 보기
+              </button>
+              <button className={viewMode === 'calendar' ? 'active' : ''} type="button" onClick={() => changeViewMode('calendar')} aria-pressed={viewMode === 'calendar'}>
+                <CalendarDays size={14} />달력으로 보기
+              </button>
+            </div>
           </div>
           {status === 'error' && events.length > 0 && (
             <div className="partial-error" role="status"><CircleAlert size={15} />{error}<button type="button" onClick={retry}>다시 시도</button></div>
           )}
-          {pageEvents.length > 0 ? (
+          {events.length === 0 ? (
+            <PanelFeedback
+              status={status}
+              error={error}
+              onRetry={retry}
+              emptyTitle="조회 기간에 등록된 일정이 없어요."
+              emptyDescription="새 일정이 등록되면 이곳에 표시됩니다."
+            />
+          ) : viewMode === 'list' && pageEvents.length > 0 ? (
             <ol className="timeline-list">
               {pageEvents.map((event) => (
                 <li key={event.id}>
@@ -532,22 +611,58 @@ function TimelineView({
                 </li>
               ))}
             </ol>
-          ) : events.length === 0 ? (
-            <PanelFeedback
-              status={status}
-              error={error}
-              onRetry={retry}
-              emptyTitle="조회 기간에 등록된 일정이 없어요."
-              emptyDescription="새 일정이 등록되면 이곳에 표시됩니다."
-            />
-          ) : (
+          ) : viewMode === 'list' ? (
             <div className="empty-content data-feedback">
               <CalendarDays size={23} />
               <strong>이 기간에는 일정이 없어요.</strong>
               <span>다른 번호의 목록을 확인해 보세요.</span>
             </div>
+          ) : (
+            <div className="academic-calendar">
+              <div className="calendar-navigation">
+                <button type="button" onClick={() => selectCalendarMonth(calendarMonthIndex - 1)} disabled={calendarMonthIndex === 0} aria-label="이전 달">
+                  <ChevronLeft size={17} />
+                </button>
+                <div>
+                  <strong>{calendarMonth?.label || '달력'}</strong>
+                  <span>{calendarMonthEvents.length}개 일정</span>
+                </div>
+                <button type="button" onClick={() => selectCalendarMonth(calendarMonthIndex + 1)} disabled={calendarMonthIndex >= calendarMonths.length - 1} aria-label="다음 달">
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+              <div className="calendar-weekdays" aria-hidden="true">
+                {['일', '월', '화', '수', '목', '금', '토'].map((weekday) => <span key={weekday}>{weekday}</span>)}
+              </div>
+              <div className="calendar-grid" role="grid" aria-label={`${calendarMonth?.label || ''} 학사 일정`}>
+                {calendarCells.map((cell) => (
+                  <div
+                    className={`calendar-day ${cell.inMonth ? '' : 'outside-month'} ${cell.inRange ? '' : 'outside-range'} ${cell.isToday ? 'today' : ''}`}
+                    key={cell.scheduleDate}
+                    role="gridcell"
+                  >
+                    <time dateTime={cell.scheduleDate}>{cell.day}</time>
+                    <div className="calendar-day-events">
+                      {cell.events.slice(0, 2).map((event) => (
+                        <button
+                          className={`calendar-event ${event.tone} ${selectedId === event.id ? 'selected' : ''}`}
+                          type="button"
+                          key={event.id}
+                          onClick={() => setSelectedId(event.id)}
+                          aria-label={`${cell.scheduleDate} ${event.title}`}
+                          title={event.title}
+                        >
+                          <span>{event.title}</span>
+                        </button>
+                      ))}
+                      {cell.events.length > 2 && <small className="calendar-more">+{cell.events.length - 2}</small>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
-          {events.length > 0 && (
+          {events.length > 0 && viewMode === 'list' && (
             <nav className="timeline-pagination" aria-label="학사 일정 목록 페이지">
               {Array.from({ length: pageCount }, (_, index) => (
                 <button
