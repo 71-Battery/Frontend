@@ -34,7 +34,7 @@ const initialSignup = {
   passwordConfirm: '',
   terms: false,
   privacy: false,
-  notifications: true,
+  notifications: false,
 }
 
 function normalizeEmailLocal(value) {

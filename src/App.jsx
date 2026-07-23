@@ -11,6 +11,8 @@ import {
 import gsap from 'gsap'
 import {
   ArrowRight,
+  Bell,
+  BellOff,
   Bookmark,
   BookmarkCheck,
   BookOpenText,
@@ -27,13 +29,16 @@ import {
   LogOut,
   Megaphone,
   MessageCircleQuestion,
+  Moon,
   Plus,
   RefreshCw,
   Search,
   Send,
   ShieldCheck,
   Sparkles,
+  Sun,
   UserRound,
+  X,
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
 import EmailConfirmationPage from './EmailConfirmationPage.jsx'
@@ -54,6 +59,15 @@ import {
   readSession as readStoredSession,
   saveSession as saveStoredSession,
 } from './api/sessionStore.js'
+import {
+  isPageInBackground,
+  requestNotificationPermission,
+  showBackgroundNotification,
+} from './api/browserNotifications.js'
+import {
+  readPreferences,
+  savePreferences,
+} from './api/preferencesStore.js'
 import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourceMapper.js'
 import { buildCalendarMonth, getCalendarMonths } from './api/calendarMapper.js'
 import {
@@ -143,24 +157,129 @@ function SourceBadges({ meta = {}, demo = false }) {
   )
 }
 
-function DashboardHeader({ user, profileMeta, onLogout, loggingOut = false }) {
+function DashboardHeader({
+  user,
+  profileMeta,
+  preferences,
+  onThemeChange,
+  onNotificationsChange,
+  onLogout,
+  loggingOut = false,
+}) {
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [notificationBusy, setNotificationBusy] = useState(false)
+  const profileMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (!profileOpen) return undefined
+
+    function handlePointerDown(event) {
+      if (!profileMenuRef.current?.contains(event.target)) setProfileOpen(false)
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setProfileOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [profileOpen])
+
+  async function toggleNotifications() {
+    if (notificationBusy) return
+    setNotificationBusy(true)
+    try {
+      await onNotificationsChange(!preferences.notifications)
+    } finally {
+      setNotificationBusy(false)
+    }
+  }
+
   return (
     <header className="dashboard-header">
       <Brand />
       <div className="header-actions">
-        <div className="account-summary">
-          <span className="account-avatar">{user.name.slice(0, 1)}</span>
-          <span className="account-copy">
-            <strong>{user.name}</strong>
-            <small>
-              {getGrade(user)}
-              {user.classNum ? ` ${user.classNum}반` : ''}
-              {user.number ? ` ${user.number}번` : ''}
-              {' · '}
-              {getDepartment(user)}
-            </small>
-          </span>
-          <SourceBadges meta={profileMeta} demo={user.dataSource === 'demo'} />
+        <div className="profile-menu" ref={profileMenuRef}>
+          <button
+            className="account-summary"
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={profileOpen}
+            onClick={() => setProfileOpen((open) => !open)}
+          >
+            <span className="account-avatar">{user.name.slice(0, 1)}</span>
+            <span className="account-copy">
+              <strong>{user.name}</strong>
+              <small>
+                {getGrade(user)}
+                {user.classNum ? ` ${user.classNum}반` : ''}
+                {user.number ? ` ${user.number}번` : ''}
+                {' · '}
+                {getDepartment(user)}
+              </small>
+            </span>
+            <SourceBadges meta={profileMeta} demo={user.dataSource === 'demo'} />
+            <ChevronDown className="profile-chevron" size={15} />
+          </button>
+          {profileOpen && (
+            <section className="profile-settings" role="dialog" aria-label="프로필 설정">
+              <div className="profile-settings-heading">
+                <span className="account-avatar large">{user.name.slice(0, 1)}</span>
+                <div>
+                  <strong>{user.name}</strong>
+                  <small>{user.schoolEmail || user.email}</small>
+                </div>
+              </div>
+              <div className="profile-settings-group">
+                <div className="profile-setting-copy">
+                  <strong>화면 모드</strong>
+                  <small>원하는 화면 밝기를 선택하세요.</small>
+                </div>
+                <div className="theme-options" aria-label="화면 모드">
+                  <button
+                    className={preferences.theme === 'light' ? 'active' : ''}
+                    type="button"
+                    aria-pressed={preferences.theme === 'light'}
+                    onClick={() => onThemeChange('light')}
+                  >
+                    <Sun size={15} /> 화이트
+                  </button>
+                  <button
+                    className={preferences.theme === 'dark' ? 'active' : ''}
+                    type="button"
+                    aria-pressed={preferences.theme === 'dark'}
+                    onClick={() => onThemeChange('dark')}
+                  >
+                    <Moon size={15} /> 다크
+                  </button>
+                </div>
+              </div>
+              <div className="profile-settings-group notification-setting">
+                <span className="setting-symbol">
+                  {preferences.notifications ? <Bell size={17} /> : <BellOff size={17} />}
+                </span>
+                <div className="profile-setting-copy">
+                  <strong>AI 답변 알림</strong>
+                  <small>다른 탭에 있을 때 답변 도착을 알려드려요.</small>
+                </div>
+                <button
+                  className="setting-switch"
+                  type="button"
+                  role="switch"
+                  aria-checked={preferences.notifications}
+                  aria-label="AI 답변 알림"
+                  onClick={toggleNotifications}
+                  disabled={notificationBusy}
+                >
+                  <span />
+                </button>
+              </div>
+            </section>
+          )}
         </div>
         <button
           className="icon-action"
@@ -173,6 +292,31 @@ function DashboardHeader({ user, profileMeta, onLogout, loggingOut = false }) {
         </button>
       </div>
     </header>
+  )
+}
+
+function AppToast({ notification, onOpen, onClose }) {
+  if (!notification) return null
+
+  const content = (
+    <>
+      <span><Sparkles size={17} /></span>
+      <span>
+        <strong>{notification.title}</strong>
+        <small>{notification.body}</small>
+      </span>
+    </>
+  )
+
+  return (
+    <div className={`app-toast ${notification.tone || ''}`} role="status" aria-live="polite">
+      {notification.action === 'chat'
+        ? <button className="app-toast-content" type="button" onClick={onOpen}>{content}</button>
+        : <div className="app-toast-content static">{content}</div>}
+      <button className="app-toast-close" type="button" onClick={onClose} aria-label="알림 닫기">
+        <X size={16} />
+      </button>
+    </div>
   )
 }
 
@@ -207,7 +351,7 @@ function EvidenceList({ sources = [], onSourceSelect, label = '답변 근거' })
   )
 }
 
-function ChatPanel({ user, authToken, onSourceSelect }) {
+function ChatPanel({ user, authToken, onSourceSelect, onAnswerReady }) {
   const [question, setQuestion] = useState('')
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
@@ -246,6 +390,7 @@ function ChatPanel({ user, authToken, onSourceSelect }) {
         hasContext: response.hasContext,
         sources: response.sources || [],
       }])
+      onAnswerReady?.()
     } catch (requestError) {
       setError(requestError.message || '답변을 불러오지 못했습니다.')
     } finally {
@@ -1061,6 +1206,8 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const { user, token: authToken, permissions, meta: profileMeta } = session
   const [activeView, setActiveView] = useState('home')
   const [focusedResource, setFocusedResource] = useState(null)
+  const [preferences, setPreferences] = useState(readPreferences)
+  const [toast, setToast] = useState(null)
   const academic = useAcademicData({ user, authToken })
   const contentItems = [...academic.notices.items, ...academic.regulations.items].sort((left, right) => (
     String(right.publishedAt || right.effectiveFrom).localeCompare(String(left.publishedAt || left.effectiveFrom))
@@ -1082,15 +1229,78 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
     setActiveView(source.type === RESOURCE_TYPES.SCHEDULE ? 'timeline' : 'notices')
   }
 
+  function updatePreferences(patch) {
+    setPreferences((current) => {
+      const next = { ...current, ...patch }
+      savePreferences(next)
+      return next
+    })
+  }
+
+  function handleThemeChange(theme) {
+    updatePreferences({ theme })
+  }
+
+  async function handleNotificationsChange(enabled) {
+    if (!enabled) {
+      updatePreferences({ notifications: false })
+      return
+    }
+
+    const permission = await requestNotificationPermission()
+    if (permission !== 'granted') {
+      updatePreferences({ notifications: false })
+      setToast({
+        tone: 'warning',
+        title: permission === 'unsupported' ? '알림을 지원하지 않는 브라우저예요' : '알림 권한이 필요해요',
+        body: permission === 'unsupported'
+          ? '지원되는 브라우저에서 다시 설정해 주세요.'
+          : '브라우저 설정에서 이 사이트의 알림을 허용해 주세요.',
+      })
+      return
+    }
+
+    updatePreferences({ notifications: true })
+  }
+
+  function openChatFromNotification() {
+    window.focus()
+    setActiveView('chat')
+    setToast(null)
+  }
+
+  function handleAnswerReady() {
+    if (!preferences.notifications || !isPageInBackground()) return
+
+    const notification = {
+      title: 'AI 답변이 도착했어요',
+      body: 'GSM Compass에서 답변을 확인해 보세요.',
+      action: 'chat',
+    }
+    setToast(notification)
+    showBackgroundNotification({
+      ...notification,
+      onClick: openChatFromNotification,
+    })
+  }
+
   return (
-    <div className="dashboard-shell">
+    <div className="dashboard-shell" data-theme={preferences.theme}>
       <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
       <a className="skip-link" href="#main-content">본문으로 바로가기</a>
       <DashboardHeader
         user={user}
         profileMeta={profileMeta}
+        preferences={preferences}
+        onThemeChange={handleThemeChange}
+        onNotificationsChange={handleNotificationsChange}
         onLogout={onLogout}
         loggingOut={loggingOut}
+      />
+      <AppToast
+        notification={toast}
+        onOpen={openChatFromNotification}
+        onClose={() => setToast(null)}
       />
       <main className="dashboard-main" id="main-content">
         <PrimaryNavigation activeView={activeView} onChange={setActiveView} savedCount={savedCount} />
@@ -1110,7 +1320,12 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
             </div>
           )}
           <div className="single-view" hidden={activeView !== 'chat'}>
-            <ChatPanel user={user} authToken={authToken} onSourceSelect={handleSourceSelect} />
+            <ChatPanel
+              user={user}
+              authToken={authToken}
+              onSourceSelect={handleSourceSelect}
+              onAnswerReady={handleAnswerReady}
+            />
           </div>
           {activeView === 'timeline' && (
             <TimelineView
