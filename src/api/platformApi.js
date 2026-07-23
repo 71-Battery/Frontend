@@ -1,0 +1,197 @@
+import { ApiError, apiRequest, unwrapData } from './httpClient.js'
+import { normalizeAiSource, normalizeChatPayload } from './chatMapper.js'
+import { normalizeProfile } from './profileMapper.js'
+import { mapAndSortSchedules } from './scheduleMapper.js'
+import {
+  normalizeContentResources,
+  normalizeSavedResource,
+  RESOURCE_TYPES,
+} from './resourceMapper.js'
+
+export const PLATFORM_ENDPOINTS = Object.freeze({
+  root: '/',
+  health: '/health',
+  supabaseHealth: '/supabase-health',
+  chat: '/api/v1/chat',
+  guidance: '/api/guidance',
+  adminRules: '/api/admin/rules',
+  profile: '/api/profile',
+  schedules: '/api/schedules',
+  notices: '/api/notices',
+  regulations: '/api/regulations',
+  savedResources: '/api/saved-resources',
+  apiHealth: '/api/health',
+})
+
+function asText(value, fallback = '') {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+}
+
+function asTextList(value) {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => asText(typeof item === 'string' ? item : item?.title || item?.text)).filter(Boolean)
+}
+
+function getMeta(payload, data) {
+  const meta = payload?.meta || data?.meta
+  return meta && typeof meta === 'object' && !Array.isArray(meta) ? meta : {}
+}
+
+function getList(data, key) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.[key])) return data[key]
+  if (Array.isArray(data?.items)) return data.items
+  return []
+}
+
+function normalizePermissions(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  return {
+    canManageContent: source.canManageContent === true,
+  }
+}
+
+export async function getServerInfo({ signal } = {}) {
+  return apiRequest(PLATFORM_ENDPOINTS.root, { signal })
+}
+
+export async function getHealth({ signal } = {}) {
+  return apiRequest(PLATFORM_ENDPOINTS.health, { signal })
+}
+
+export async function getSupabaseHealth({ signal } = {}) {
+  return apiRequest(PLATFORM_ENDPOINTS.supabaseHealth, { signal })
+}
+
+export async function getApiHealth({ signal } = {}) {
+  return apiRequest(PLATFORM_ENDPOINTS.apiHealth, { signal })
+}
+
+export async function getProfile({ authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.profile, { authToken, signal })
+  const data = unwrapData(payload)
+  const source = data?.profile || data?.student || data?.user || data
+  if (!source || typeof source !== 'object') {
+    throw new ApiError('프로필 응답을 확인할 수 없습니다.', { code: 'INVALID_PROFILE_RESPONSE' })
+  }
+  const meta = getMeta(payload, data)
+  return {
+    profile: normalizeProfile({
+      ...source,
+      dataSource: meta.fallback ? 'fallback' : source.dataSource,
+    }),
+    permissions: normalizePermissions(data?.permissions || payload?.permissions),
+    meta,
+  }
+}
+
+export async function getSchedules({ fromDate, toDate, studentGrade, authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.schedules, {
+    query: { fromDate, toDate },
+    authToken,
+    signal,
+  })
+  const data = unwrapData(payload)
+  return {
+    items: mapAndSortSchedules(getList(data, 'schedules'), studentGrade),
+    meta: { source: 'DATA_GSM', ...getMeta(payload, data) },
+  }
+}
+
+export async function getNotices({ profile, authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.notices, { authToken, signal })
+  const data = unwrapData(payload)
+  return {
+    items: normalizeContentResources(getList(data, 'notices'), RESOURCE_TYPES.NOTICE, profile),
+    meta: { source: 'INTERNAL_DB', ...getMeta(payload, data) },
+  }
+}
+
+export async function getRegulations({ profile, authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.regulations, { authToken, signal })
+  const data = unwrapData(payload)
+  return {
+    items: normalizeContentResources(getList(data, 'regulations'), RESOURCE_TYPES.RULE, profile),
+    meta: { source: 'INTERNAL_DB', ...getMeta(payload, data) },
+  }
+}
+
+export async function getSavedResources({ authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.savedResources, { authToken, signal })
+  const data = unwrapData(payload)
+  return {
+    items: getList(data, 'savedResources').map(normalizeSavedResource).filter(Boolean),
+    meta: { source: 'USER_DATA', ...getMeta(payload, data) },
+  }
+}
+
+export async function saveResource(resourceType, resourceId, { authToken, signal } = {}) {
+  const payload = await apiRequest(
+    `${PLATFORM_ENDPOINTS.savedResources}/${encodeURIComponent(resourceType)}/${encodeURIComponent(resourceId)}`,
+    { method: 'PUT', authToken, signal },
+  )
+  if (!payload) return { resourceType, resourceId }
+  const data = unwrapData(payload)
+  return normalizeSavedResource(data?.savedResource || data) || { resourceType, resourceId }
+}
+
+export async function removeSavedResource(resourceType, resourceId, { authToken, signal } = {}) {
+  await apiRequest(
+    `${PLATFORM_ENDPOINTS.savedResources}/${encodeURIComponent(resourceType)}/${encodeURIComponent(resourceId)}`,
+    { method: 'DELETE', authToken, signal },
+  )
+}
+
+export async function sendChat(message, { authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.chat, {
+    method: 'POST',
+    body: { query: asText(message) },
+    authToken,
+    signal,
+    timeoutMs: 90000,
+  })
+  const result = normalizeChatPayload(payload)
+  if (!result) throw new ApiError('AI 답변 형식을 확인할 수 없습니다.', { code: 'INVALID_CHAT_RESPONSE' })
+  return result
+}
+
+export async function requestGuidance({ topic, authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.guidance, {
+    method: 'POST',
+    body: {
+      topic: asText(topic, '지금 해야 할 학사 활동'),
+    },
+    authToken,
+    signal,
+  })
+  const data = unwrapData(payload) || {}
+  return {
+    title: asText(data.title || data.headline, '나를 위한 학사 가이드'),
+    summary: asText(data.answer || data.summary || data.description, '학년과 학과를 바탕으로 필요한 정보를 정리했어요.'),
+    priorities: asTextList(data.priorities || data.actions || data.todo),
+    tips: asTextList(data.tips || data.recommendations),
+    sources: (Array.isArray(data.sources) ? data.sources : []).map(normalizeAiSource).filter(Boolean),
+    updatedAt: data.updatedAt || null,
+  }
+}
+
+export async function getAdminRules({ authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.adminRules, { authToken, signal })
+  const data = unwrapData(payload)
+  return Array.isArray(data) ? data : Array.isArray(data?.rules) ? data.rules : []
+}
+
+export async function createAdminRule(rule, { authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.adminRules, {
+    method: 'POST',
+    body: {
+      title: asText(rule.title),
+      content: asText(rule.content),
+      category: asText(rule.category, 'GENERAL'),
+    },
+    authToken,
+    signal,
+  })
+  const data = unwrapData(payload) || {}
+  return data.rule || data
+}
