@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import gsap from 'gsap'
 import {
   ArrowRight,
@@ -52,6 +61,8 @@ import {
 } from './api/scheduleMapper.js'
 import { useAcademicData } from './hooks/useAcademicData.js'
 import './App.css'
+
+const MarkdownMessage = lazy(() => import('./components/MarkdownMessage.jsx'))
 
 const departmentLabels = {
   SW_DEVELOPMENT: '소프트웨어개발과',
@@ -256,7 +267,13 @@ function ChatPanel({ user, authToken, onSourceSelect }) {
             <div className={`message ${message.role}`} key={message.id}>
               {message.role === 'assistant' && <span><Sparkles size={15} /></span>}
               <div className="message-body">
-                <p>{message.content}</p>
+                {message.role === 'assistant'
+                  ? (
+                    <Suspense fallback={<p>{message.content}</p>}>
+                      <MarkdownMessage content={message.content} />
+                    </Suspense>
+                  )
+                  : <p>{message.content}</p>}
                 {message.hasContext === false && (
                   <div className="answer-context-empty" role="status">
                     <CircleAlert size={14} />
