@@ -120,7 +120,6 @@ function SourceBadges({ meta = {}, demo = false }) {
     <span className="source-badges" aria-label="데이터 상태">
       {demo && <small className="source-badge demo">DEMO</small>}
       {!demo && meta.fallback && <small className="source-badge warning">로컬 프로필</small>}
-      {!demo && !meta.fallback && source.includes('DATA') && <small className="source-badge">Data-GSM</small>}
       {!demo && source.includes('USER') && <small className="source-badge">사용자 저장</small>}
       {meta.stale && <small className="source-badge warning">업데이트 지연</small>}
     </span>
