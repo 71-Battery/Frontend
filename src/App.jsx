@@ -469,6 +469,7 @@ function TimelineView({
   const [pageIndex, setPageIndex] = useState(0)
   const [viewMode, setViewMode] = useState('list')
   const [calendarMonthIndex, setCalendarMonthIndex] = useState(0)
+  const timelineModeRef = useRef(null)
   const pageCount = useMemo(() => getSchedulePageCount(events), [events])
   const pageEvents = useMemo(() => getSchedulesForPage(events, pageIndex), [events, pageIndex])
   const fallbackRange = useMemo(() => getDefaultScheduleRange(), [])
@@ -484,6 +485,29 @@ function TimelineView({
     () => events.filter((event) => event.scheduleDate.startsWith(`${calendarMonth?.key || 'none'}-`)),
     [calendarMonth, events],
   )
+
+  useLayoutEffect(() => {
+    const target = timelineModeRef.current
+    if (!target) return undefined
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.set(target, { clearProps: 'all' })
+      return undefined
+    }
+    const animation = gsap.fromTo(
+      target,
+      { autoAlpha: 0, y: 10, scale: 0.992, filter: 'blur(3px)' },
+      {
+        autoAlpha: 1,
+        y: 0,
+        scale: 1,
+        filter: 'blur(0px)',
+        duration: 0.34,
+        ease: 'power2.out',
+        clearProps: 'opacity,visibility,transform,filter',
+      },
+    )
+    return () => animation.kill()
+  }, [viewMode])
 
   useEffect(() => {
     const focusedEvent = events.find((event) => event.id === selectedResourceId)
@@ -581,103 +605,105 @@ function TimelineView({
           {status === 'error' && events.length > 0 && (
             <div className="partial-error" role="status"><CircleAlert size={15} />{error}<button type="button" onClick={retry}>다시 시도</button></div>
           )}
-          {events.length === 0 ? (
-            <PanelFeedback
-              status={status}
-              error={error}
-              onRetry={retry}
-              emptyTitle="조회 기간에 등록된 일정이 없어요."
-              emptyDescription="새 일정이 등록되면 이곳에 표시됩니다."
-            />
-          ) : viewMode === 'list' && pageEvents.length > 0 ? (
-            <ol className="timeline-list">
-              {pageEvents.map((event) => (
-                <li key={event.id}>
-                  <button
-                    className={`timeline-row ${selectedId === event.id ? 'selected' : ''}`}
-                    type="button"
-                    onClick={() => setSelectedId(event.id)}
-                    aria-current={selectedId === event.id ? 'true' : undefined}
-                  >
-                    <time><strong>{event.date}</strong><span>{event.month}</span></time>
-                    <span className={`timeline-marker ${event.tone}`} />
-                    <span className="timeline-row-copy">
-                      <span><em>{event.category}</em><small>{event.target}</small></span>
-                      <strong>{event.title}</strong>
-                      <small>{event.description}</small>
-                    </span>
-                    <b className={event.tone}>{event.dday}</b>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          ) : viewMode === 'list' ? (
-            <div className="empty-content data-feedback">
-              <CalendarDays size={23} />
-              <strong>이 기간에는 일정이 없어요.</strong>
-              <span>다른 번호의 목록을 확인해 보세요.</span>
-            </div>
-          ) : (
-            <div className="academic-calendar">
-              <div className="calendar-navigation">
-                <button type="button" onClick={() => selectCalendarMonth(calendarMonthIndex - 1)} disabled={calendarMonthIndex === 0} aria-label="이전 달">
-                  <ChevronLeft size={17} />
-                </button>
-                <div>
-                  <strong>{calendarMonth?.label || '달력'}</strong>
-                  <span>{calendarMonthEvents.length}개 일정</span>
-                </div>
-                <button type="button" onClick={() => selectCalendarMonth(calendarMonthIndex + 1)} disabled={calendarMonthIndex >= calendarMonths.length - 1} aria-label="다음 달">
-                  <ChevronRight size={17} />
-                </button>
-              </div>
-              <div className="calendar-weekdays" aria-hidden="true">
-                {['일', '월', '화', '수', '목', '금', '토'].map((weekday) => <span key={weekday}>{weekday}</span>)}
-              </div>
-              <div className="calendar-grid" role="grid" aria-label={`${calendarMonth?.label || ''} 학사 일정`}>
-                {calendarCells.map((cell) => (
-                  <div
-                    className={`calendar-day ${cell.inMonth ? '' : 'outside-month'} ${cell.inRange ? '' : 'outside-range'} ${cell.isToday ? 'today' : ''}`}
-                    key={cell.scheduleDate}
-                    role="gridcell"
-                  >
-                    <time dateTime={cell.scheduleDate}>{cell.day}</time>
-                    <div className="calendar-day-events">
-                      {cell.events.slice(0, 2).map((event) => (
-                        <button
-                          className={`calendar-event ${event.tone} ${selectedId === event.id ? 'selected' : ''}`}
-                          type="button"
-                          key={event.id}
-                          onClick={() => setSelectedId(event.id)}
-                          aria-label={`${cell.scheduleDate} ${event.title}`}
-                          title={event.title}
-                        >
-                          <span>{event.title}</span>
-                        </button>
-                      ))}
-                      {cell.events.length > 2 && <small className="calendar-more">+{cell.events.length - 2}</small>}
-                    </div>
-                  </div>
+          <div className="timeline-mode-content" ref={timelineModeRef}>
+            {events.length === 0 ? (
+              <PanelFeedback
+                status={status}
+                error={error}
+                onRetry={retry}
+                emptyTitle="조회 기간에 등록된 일정이 없어요."
+                emptyDescription="새 일정이 등록되면 이곳에 표시됩니다."
+              />
+            ) : viewMode === 'list' && pageEvents.length > 0 ? (
+              <ol className="timeline-list">
+                {pageEvents.map((event) => (
+                  <li key={event.id}>
+                    <button
+                      className={`timeline-row ${selectedId === event.id ? 'selected' : ''}`}
+                      type="button"
+                      onClick={() => setSelectedId(event.id)}
+                      aria-current={selectedId === event.id ? 'true' : undefined}
+                    >
+                      <time><strong>{event.date}</strong><span>{event.month}</span></time>
+                      <span className={`timeline-marker ${event.tone}`} />
+                      <span className="timeline-row-copy">
+                        <span><em>{event.category}</em><small>{event.target}</small></span>
+                        <strong>{event.title}</strong>
+                        <small>{event.description}</small>
+                      </span>
+                      <b className={event.tone}>{event.dday}</b>
+                    </button>
+                  </li>
                 ))}
+              </ol>
+            ) : viewMode === 'list' ? (
+              <div className="empty-content data-feedback">
+                <CalendarDays size={23} />
+                <strong>이 기간에는 일정이 없어요.</strong>
+                <span>다른 번호의 목록을 확인해 보세요.</span>
               </div>
-            </div>
-          )}
-          {events.length > 0 && viewMode === 'list' && (
-            <nav className="timeline-pagination" aria-label="학사 일정 목록 페이지">
-              {Array.from({ length: pageCount }, (_, index) => (
-                <button
-                  className={pageIndex === index ? 'active' : ''}
-                  type="button"
-                  key={index}
-                  onClick={() => selectPage(index)}
-                  aria-current={pageIndex === index ? 'page' : undefined}
-                  aria-label={`${index + 1}번 목록`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </nav>
-          )}
+            ) : (
+              <div className="academic-calendar">
+                <div className="calendar-navigation">
+                  <button type="button" onClick={() => selectCalendarMonth(calendarMonthIndex - 1)} disabled={calendarMonthIndex === 0} aria-label="이전 달">
+                    <ChevronLeft size={17} />
+                  </button>
+                  <div>
+                    <strong>{calendarMonth?.label || '달력'}</strong>
+                    <span>{calendarMonthEvents.length}개 일정</span>
+                  </div>
+                  <button type="button" onClick={() => selectCalendarMonth(calendarMonthIndex + 1)} disabled={calendarMonthIndex >= calendarMonths.length - 1} aria-label="다음 달">
+                    <ChevronRight size={17} />
+                  </button>
+                </div>
+                <div className="calendar-weekdays" aria-hidden="true">
+                  {['일', '월', '화', '수', '목', '금', '토'].map((weekday) => <span key={weekday}>{weekday}</span>)}
+                </div>
+                <div className="calendar-grid" role="grid" aria-label={`${calendarMonth?.label || ''} 학사 일정`}>
+                  {calendarCells.map((cell) => (
+                    <div
+                      className={`calendar-day ${cell.inMonth ? '' : 'outside-month'} ${cell.inRange ? '' : 'outside-range'} ${cell.isToday ? 'today' : ''}`}
+                      key={cell.scheduleDate}
+                      role="gridcell"
+                    >
+                      <time dateTime={cell.scheduleDate}>{cell.day}</time>
+                      <div className="calendar-day-events">
+                        {cell.events.slice(0, 2).map((event) => (
+                          <button
+                            className={`calendar-event ${event.tone} ${selectedId === event.id ? 'selected' : ''}`}
+                            type="button"
+                            key={event.id}
+                            onClick={() => setSelectedId(event.id)}
+                            aria-label={`${cell.scheduleDate} ${event.title}`}
+                            title={event.title}
+                          >
+                            <span>{event.title}</span>
+                          </button>
+                        ))}
+                        {cell.events.length > 2 && <small className="calendar-more">+{cell.events.length - 2}</small>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {events.length > 0 && viewMode === 'list' && (
+              <nav className="timeline-pagination" aria-label="학사 일정 목록 페이지">
+                {Array.from({ length: pageCount }, (_, index) => (
+                  <button
+                    className={pageIndex === index ? 'active' : ''}
+                    type="button"
+                    key={index}
+                    onClick={() => selectPage(index)}
+                    aria-current={pageIndex === index ? 'page' : undefined}
+                    aria-label={`${index + 1}번 목록`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </nav>
+            )}
+          </div>
         </section>
 
         {selected ? (

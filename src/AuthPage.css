@@ -110,6 +110,10 @@
 }
 
 .auth-stage-shell {
+  margin-right: -18px;
+  margin-left: -18px;
+  padding-right: 18px;
+  padding-left: 18px;
   overflow: hidden;
 }
 
@@ -435,25 +439,23 @@
 
 .auth-divider {
   position: relative;
-  display: grid;
+  display: flex;
   height: 16px;
-  place-items: center;
+  align-items: center;
+  gap: 10px;
 }
 
-.auth-divider::before {
-  position: absolute;
-  right: 0;
-  left: 0;
+.auth-divider::before,
+.auth-divider::after {
+  flex: 1 1 auto;
   height: 1px;
   content: '';
   background: #e7eaf0;
 }
 
 .auth-divider span {
-  position: relative;
-  padding: 0 10px;
+  flex: 0 0 auto;
   color: #a0a8b4;
-  background: rgba(255, 255, 255, 0.94);
   font-size: 9px;
 }
 

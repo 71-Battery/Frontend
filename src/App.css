@@ -602,12 +602,20 @@
   font-size: 9px;
   font-weight: 750;
   gap: 5px;
+  transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
+
+.timeline-view-toggle button:active { transform: scale(0.97); }
 
 .timeline-view-toggle button.active {
   color: var(--accent);
   background: #fff;
   box-shadow: 0 5px 13px rgba(35, 46, 76, 0.08);
+}
+
+.timeline-mode-content {
+  min-width: 0;
+  transform-origin: 50% 12px;
 }
 
 .timeline-list {
