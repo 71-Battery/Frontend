@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   isPageInBackground,
   requestNotificationPermission,
+  shouldNotifyForAnswer,
   showBackgroundNotification,
 } from '../src/api/browserNotifications.js'
 
@@ -10,6 +11,13 @@ test('detects a hidden or unfocused page', () => {
   assert.equal(isPageInBackground({ hidden: true, hasFocus: () => true }), true)
   assert.equal(isPageInBackground({ hidden: false, hasFocus: () => false }), true)
   assert.equal(isPageInBackground({ hidden: false, hasFocus: () => true }), false)
+})
+
+test('notifies only while another GSM Compass menu is active', () => {
+  assert.equal(shouldNotifyForAnswer({ notificationsEnabled: true, activeView: 'home' }), true)
+  assert.equal(shouldNotifyForAnswer({ notificationsEnabled: true, activeView: 'timeline' }), true)
+  assert.equal(shouldNotifyForAnswer({ notificationsEnabled: true, activeView: 'chat' }), false)
+  assert.equal(shouldNotifyForAnswer({ notificationsEnabled: false, activeView: 'home' }), false)
 })
 
 test('requests notification permission only when it is undecided', async () => {

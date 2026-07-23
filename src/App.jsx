@@ -60,8 +60,8 @@ import {
   saveSession as saveStoredSession,
 } from './api/sessionStore.js'
 import {
-  isPageInBackground,
   requestNotificationPermission,
+  shouldNotifyForAnswer,
   showBackgroundNotification,
 } from './api/browserNotifications.js'
 import {
@@ -264,7 +264,7 @@ function DashboardHeader({
                 </span>
                 <div className="profile-setting-copy">
                   <strong>AI 답변 알림</strong>
-                  <small>다른 탭에 있을 때 답변 도착을 알려드려요.</small>
+                  <small>AI 질문이 아닌 다른 메뉴를 볼 때 답변 도착을 알려드려요.</small>
                 </div>
                 <button
                   className="setting-switch"
@@ -1208,6 +1208,8 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const [focusedResource, setFocusedResource] = useState(null)
   const [preferences, setPreferences] = useState(readPreferences)
   const [toast, setToast] = useState(null)
+  const activeViewRef = useRef(activeView)
+  const preferencesRef = useRef(preferences)
   const academic = useAcademicData({ user, authToken })
   const contentItems = [...academic.notices.items, ...academic.regulations.items].sort((left, right) => (
     String(right.publishedAt || right.effectiveFrom).localeCompare(String(left.publishedAt || left.effectiveFrom))
@@ -1216,6 +1218,9 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const isDemo = user.dataSource === 'demo'
   const viewRef = useRef(null)
   const savedCount = academic.savedKeys.size
+
+  activeViewRef.current = activeView
+  preferencesRef.current = preferences
 
   useLayoutEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
@@ -1270,11 +1275,14 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   }
 
   function handleAnswerReady() {
-    if (!preferences.notifications || !isPageInBackground()) return
+    if (!shouldNotifyForAnswer({
+      notificationsEnabled: preferencesRef.current.notifications,
+      activeView: activeViewRef.current,
+    })) return
 
     const notification = {
       title: 'AI 답변이 도착했어요',
-      body: 'GSM Compass에서 답변을 확인해 보세요.',
+      body: 'AI 질문 탭에서 준비된 답변을 확인해 보세요.',
       action: 'chat',
     }
     setToast(notification)

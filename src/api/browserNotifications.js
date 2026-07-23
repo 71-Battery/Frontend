@@ -3,6 +3,10 @@ export function isPageInBackground(documentObject = globalThis.document) {
   return documentObject.hidden === true || documentObject.hasFocus?.() === false
 }
 
+export function shouldNotifyForAnswer({ notificationsEnabled, activeView }) {
+  return notificationsEnabled === true && activeView !== 'chat'
+}
+
 export async function requestNotificationPermission(NotificationApi = globalThis.Notification) {
   if (!NotificationApi) return 'unsupported'
   if (NotificationApi.permission === 'granted' || NotificationApi.permission === 'denied') {
