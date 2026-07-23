@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import {
   ArrowLeft,
@@ -10,10 +10,16 @@ import {
   LoaderCircle,
   LockKeyhole,
   Mail,
+  MailCheck,
+  RefreshCw,
   Sparkles,
   UserRound,
 } from 'lucide-react'
-import { login as loginWithBackend, signup as signupWithBackend } from './api/authApi.js'
+import {
+  login as loginWithBackend,
+  resendVerification as resendVerificationEmail,
+  signup as signupWithBackend,
+} from './api/authApi.js'
 import { createDemoSession } from './api/mockAuthApi.js'
 import './AuthPage.css'
 
@@ -45,6 +51,25 @@ function isValidEmailLocal(value) {
     && !value.startsWith('.')
     && !value.endsWith('.')
     && !value.includes('..')
+}
+
+function getRemainingSeconds(timestamp, now) {
+  const target = timestamp ? Date.parse(timestamp) : Number.NaN
+  if (!Number.isFinite(target)) return 0
+  return Math.max(0, Math.ceil((target - now) / 1000))
+}
+
+function formatCountdown(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+function formatAccountCountdown(totalSeconds) {
+  if (totalSeconds <= 0) return '정리 대기 시간이 만료되었습니다.'
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  return `${hours}시간 ${minutes}분 후 미인증 계정이 자동 삭제됩니다.`
 }
 
 function TextField({
@@ -110,7 +135,11 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
   const [passwordVisibility, setPasswordVisibility] = useState({ login: false, signup: false, confirm: false })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(initialError)
+  const [notice, setNotice] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+  const [loginNeedsVerification, setLoginNeedsVerification] = useState(false)
+  const [verification, setVerification] = useState(null)
+  const [clockNow, setClockNow] = useState(() => Date.now())
   const stageRef = useRef(null)
   const titleRef = useRef(null)
   const previousStageHeightRef = useRef(null)
@@ -122,6 +151,25 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
   const panelId = useId()
 
   const panelKey = mode === 'login' ? 'login' : `signup-${signupStep}`
+  const verificationRemaining = getRemainingSeconds(
+    verification?.verificationExpiresAt,
+    clockNow,
+  )
+  const resendRemaining = getRemainingSeconds(
+    verification?.resendAvailableAt,
+    clockNow,
+  )
+  const accountRemaining = getRemainingSeconds(
+    verification?.accountExpiresAt,
+    clockNow,
+  )
+
+  useEffect(() => {
+    if (!verification) return undefined
+    setClockNow(Date.now())
+    const intervalId = window.setInterval(() => setClockNow(Date.now()), 1000)
+    return () => window.clearInterval(intervalId)
+  }, [verification])
 
   function focusFirstInvalid(form) {
     window.requestAnimationFrame(() => {
@@ -187,8 +235,29 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     setMode(nextMode)
     setSignupStep(1)
     setError('')
+    setNotice('')
     setFieldErrors({})
+    setLoginNeedsVerification(false)
+    setVerification(null)
     setPasswordVisibility({ login: false, signup: false, confirm: false })
+  }
+
+  function showVerificationStep(email, data, message) {
+    rememberStageHeight()
+    setMode('signup')
+    setSignupStep(3)
+    setVerification({
+      email,
+      verificationExpiresAt: data.verificationExpiresAt,
+      resendAvailableAt: data.resendAvailableAt,
+      accountExpiresAt: data.accountExpiresAt,
+    })
+    setClockNow(Date.now())
+    setError('')
+    setNotice(message)
+    setFieldErrors({})
+    setLoginNeedsVerification(false)
+    window.requestAnimationFrame(() => titleRef.current?.focus())
   }
 
   function handleTabKeyDown(event) {
@@ -215,6 +284,8 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
 
     setBusy(true)
     setError('')
+    setNotice('')
+    setLoginNeedsVerification(false)
     try {
       const response = await loginWithBackend({
         email: `${emailLocal}${SCHOOL_EMAIL_DOMAIN}`,
@@ -226,7 +297,33 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
         setFieldErrors(requestError.fieldErrors)
         window.requestAnimationFrame(() => focusFirstInvalid(form))
       }
+      setLoginNeedsVerification(requestError.code === 'EMAIL_NOT_VERIFIED')
       setError(requestError.message || '로그인 중 문제가 발생했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function resendFromLogin() {
+    const emailLocal = login.email.trim()
+    if (!isValidEmailLocal(emailLocal)) {
+      setFieldErrors({ email: '학교 이메일 아이디를 확인해 주세요.' })
+      return
+    }
+
+    const email = `${emailLocal}${SCHOOL_EMAIL_DOMAIN}`
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const response = await resendVerificationEmail(email)
+      showVerificationStep(
+        email,
+        response.data,
+        '새 인증 메일을 보냈습니다. 받은편지함을 확인해 주세요.',
+      )
+    } catch (requestError) {
+      setError(requestError.message || '인증 메일을 보내지 못했습니다.')
     } finally {
       setBusy(false)
     }
@@ -261,6 +358,8 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     rememberStageHeight()
     setSignupStep(1)
     setError('')
+    setNotice('')
+    setVerification(null)
     setFieldErrors({})
     window.requestAnimationFrame(() => titleRef.current?.focus())
   }
@@ -280,6 +379,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
 
     setBusy(true)
     setError('')
+    setNotice('')
     const signupPayload = {
       name: signup.name.trim(),
       studentNumber: Number(signup.studentNumber),
@@ -293,7 +393,15 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     }
     try {
       const response = await signupWithBackend(signupPayload)
-      onAuthenticated(response.data)
+      if (response.data.verificationRequired) {
+        showVerificationStep(
+          signupPayload.schoolEmail,
+          response.data,
+          '학교 이메일로 인증 링크를 보냈습니다.',
+        )
+      } else {
+        onAuthenticated(response.data)
+      }
     } catch (requestError) {
       if (requestError.fieldErrors && Object.keys(requestError.fieldErrors).length) {
         setFieldErrors(requestError.fieldErrors)
@@ -303,6 +411,51 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     } finally {
       setBusy(false)
     }
+  }
+
+  async function resendPendingVerification() {
+    if (!verification?.email || resendRemaining > 0 || busy) return
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const response = await resendVerificationEmail(verification.email)
+      setVerification((current) => ({
+        ...current,
+        verificationExpiresAt: response.data.verificationExpiresAt,
+        resendAvailableAt: response.data.resendAvailableAt,
+        accountExpiresAt: response.data.accountExpiresAt,
+      }))
+      setClockNow(Date.now())
+      setNotice('새 인증 메일을 보냈습니다. 이전 링크 대신 새 링크를 사용해 주세요.')
+    } catch (requestError) {
+      if (requestError.code === 'UNVERIFIED_ACCOUNT_EXPIRED') {
+        rememberStageHeight()
+        setVerification(null)
+        setSignupStep(1)
+      }
+      setError(requestError.message || '인증 메일을 보내지 못했습니다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function returnToLogin() {
+    if (busy) return
+    rememberStageHeight()
+    setMode('login')
+    setSignupStep(1)
+    if (verification?.email?.toLowerCase().endsWith(SCHOOL_EMAIL_DOMAIN)) {
+      setLogin((current) => ({
+        ...current,
+        email: verification.email.slice(0, -SCHOOL_EMAIL_DOMAIN.length),
+      }))
+    }
+    setVerification(null)
+    setNotice('')
+    setError('')
+    setFieldErrors({})
+    window.requestAnimationFrame(() => titleRef.current?.focus())
   }
 
   return (
@@ -327,10 +480,17 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                       <p>학교 이메일로 로그인하세요.</p>
                     </div>
                     {error && <div className="auth-error" role="alert">{error}</div>}
+                    {notice && <div className="auth-notice" role="status">{notice}</div>}
                     <form className="auth-form" onSubmit={submitLogin} noValidate aria-busy={busy}>
                       <TextField label="이메일" icon={Mail} value={login.email} onChange={(event) => setLogin({ ...login, email: normalizeEmailLocal(event.target.value) })} placeholder="이메일" autoComplete="username" inputMode="email" suffix={<span className="email-domain">@gsm.hs.kr</span>} description="아이디 부분만 입력하며, 뒤에 @gsm.hs.kr가 자동으로 붙습니다." error={fieldErrors.email} disabled={busy} />
                       <TextField label="비밀번호" icon={LockKeyhole} type={passwordVisibility.login ? 'text' : 'password'} value={login.password} onChange={(event) => setLogin({ ...login, password: event.target.value })} placeholder="비밀번호" autoComplete="current-password" suffix={<PasswordToggle visible={passwordVisibility.login} onToggle={() => setPasswordVisibility((current) => ({ ...current, login: !current.login }))} controlsLabel="로그인 비밀번호" disabled={busy} />} error={fieldErrors.password} disabled={busy} />
                       <button className="auth-submit" type="submit" disabled={busy}>{busy ? <><LoaderCircle className="spin" size={18} /> 확인 중</> : <>로그인<ArrowRight size={18} /></>}</button>
+                      {loginNeedsVerification && (
+                        <button className="resend-verification-button" type="button" onClick={resendFromLogin} disabled={busy}>
+                          {busy ? <LoaderCircle className="spin" size={17} /> : <RefreshCw size={17} />}
+                          이메일 인증 다시하기
+                        </button>
+                      )}
                       <div className="auth-divider"><span>또는</span></div>
                       <button className="demo-login" type="button" onClick={startDemo} disabled={busy}><Sparkles size={17} />데모 계정 사용하기</button>
                     </form>
@@ -338,11 +498,24 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                 ) : (
                   <>
                     <div className="auth-title-block signup-title">
-                      <div className="signup-progress" aria-label={`회원가입 ${signupStep}/2단계`}><span className="active">1</span><i /><span className={signupStep === 2 ? 'active' : ''}>2</span></div>
-                      <h1 id="auth-title" ref={titleRef} tabIndex="-1">{signupStep === 1 ? '학생 정보 입력' : '계정 보안 설정'}</h1>
-                      <p>{signupStep === 1 ? '학교 계정 확인에 필요한 정보만 입력해 주세요.' : '비밀번호와 필수 약관을 확인해 주세요.'}</p>
+                      <div className="signup-progress" aria-label={`회원가입 ${signupStep}/3단계`}>
+                        <span className="active">1</span><i />
+                        <span className={signupStep >= 2 ? 'active' : ''}>2</span><i />
+                        <span className={signupStep >= 3 ? 'active' : ''}>3</span>
+                      </div>
+                      <h1 id="auth-title" ref={titleRef} tabIndex="-1">
+                        {signupStep === 1 ? '학생 정보 입력' : signupStep === 2 ? '계정 보안 설정' : '이메일을 확인해 주세요'}
+                      </h1>
+                      <p>
+                        {signupStep === 1
+                          ? '학교 계정 확인에 필요한 정보만 입력해 주세요.'
+                          : signupStep === 2
+                            ? '비밀번호와 필수 약관을 확인해 주세요.'
+                            : '인증을 완료한 뒤 로그인 화면에서 로그인하세요.'}
+                      </p>
                     </div>
                     {error && <div className="auth-error" role="alert">{error}</div>}
+                    {notice && <div className="auth-notice" role="status">{notice}</div>}
                     {signupStep === 1 ? (
                       <form className="auth-form" onSubmit={continueSignup} noValidate>
                         <TextField label="이름" icon={UserRound} value={signup.name} onChange={(event) => setSignup({ ...signup, name: event.target.value })} placeholder="이름을 입력하세요" autoComplete="name" error={fieldErrors.name} />
@@ -352,7 +525,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                         </div>
                         <button className="auth-submit" type="submit">다음 단계<ArrowRight size={18} /></button>
                       </form>
-                    ) : (
+                    ) : signupStep === 2 ? (
                       <form className="auth-form" onSubmit={submitSignup} noValidate aria-busy={busy}>
                         <TextField label="비밀번호" icon={LockKeyhole} type={passwordVisibility.signup ? 'text' : 'password'} value={signup.password} onChange={(event) => setSignup({ ...signup, password: event.target.value })} placeholder="비밀번호" autoComplete="new-password" suffix={<PasswordToggle visible={passwordVisibility.signup} onToggle={() => setPasswordVisibility((current) => ({ ...current, signup: !current.signup }))} controlsLabel="새 비밀번호" disabled={busy} />} error={fieldErrors.password} disabled={busy} />
                         <TextField label="비밀번호 확인" icon={LockKeyhole} type={passwordVisibility.confirm ? 'text' : 'password'} value={signup.passwordConfirm} onChange={(event) => setSignup({ ...signup, passwordConfirm: event.target.value })} placeholder="비밀번호" autoComplete="new-password" suffix={<PasswordToggle visible={passwordVisibility.confirm} onToggle={() => setPasswordVisibility((current) => ({ ...current, confirm: !current.confirm }))} controlsLabel="비밀번호 확인" disabled={busy} />} error={fieldErrors.passwordConfirm} disabled={busy} />
@@ -364,6 +537,33 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                         </div>
                         <div className="signup-actions"><button type="button" className="back-button" onClick={returnToSignupInfo} disabled={busy}><ArrowLeft size={17} />이전</button><button className="auth-submit" type="submit" disabled={busy}>{busy ? <><LoaderCircle className="spin" size={18} /> 가입 중</> : <>가입하기<ArrowRight size={18} /></>}</button></div>
                       </form>
+                    ) : (
+                      <div className="verification-panel" aria-live="polite">
+                        <span className="verification-mail-icon" aria-hidden="true"><MailCheck size={26} /></span>
+                        <strong className="verification-email">{verification?.email}</strong>
+                        <div className={`verification-timer ${verificationRemaining === 0 ? 'is-expired' : ''}`}>
+                          <span>인증 링크 남은 시간</span>
+                          <b>{verificationRemaining > 0 ? formatCountdown(verificationRemaining) : '만료됨'}</b>
+                          <small>링크는 메일을 보낸 시점부터 1시간 동안 유효합니다.</small>
+                        </div>
+                        <p className="verification-retention">{formatAccountCountdown(accountRemaining)}</p>
+                        <div className="verification-actions">
+                          <button
+                            className="resend-verification-button"
+                            type="button"
+                            onClick={resendPendingVerification}
+                            disabled={busy || resendRemaining > 0}
+                          >
+                            {busy ? <LoaderCircle className="spin" size={17} /> : <RefreshCw size={17} />}
+                            {resendRemaining > 0
+                              ? `${resendRemaining}초 후 다시 보내기`
+                              : '인증 메일 다시 보내기'}
+                          </button>
+                          <button className="back-button" type="button" onClick={returnToLogin} disabled={busy}>
+                            <ArrowLeft size={17} />로그인으로 돌아가기
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </>
                 )}

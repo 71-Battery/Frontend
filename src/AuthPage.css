@@ -200,6 +200,17 @@
   line-height: 1.45;
 }
 
+.auth-notice {
+  margin-top: 14px;
+  padding: 10px 12px;
+  color: #25735f;
+  background: #ebfaf5;
+  border: 1px solid rgba(37, 151, 119, 0.12);
+  border-radius: 11px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .auth-form {
   display: grid;
   margin-top: 18px;
@@ -401,7 +412,8 @@
 
 .auth-submit,
 .demo-login,
-.back-button {
+.back-button,
+.resend-verification-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -431,13 +443,15 @@
 
 .auth-submit:active:not(:disabled),
 .demo-login:active:not(:disabled),
-.back-button:active:not(:disabled) {
+.back-button:active:not(:disabled),
+.resend-verification-button:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
 }
 
 .auth-submit:disabled,
 .demo-login:disabled,
-.back-button:disabled {
+.back-button:disabled,
+.resend-verification-button:disabled {
   cursor: wait;
   opacity: 0.62;
 }
@@ -475,6 +489,18 @@
   transform: translateY(-1px);
 }
 
+.resend-verification-button {
+  color: #5360b8;
+  background: #f0f2ff;
+  border: 1px solid rgba(91, 109, 221, 0.13);
+}
+
+.resend-verification-button:hover:not(:disabled) {
+  color: #4151b3;
+  background: #e7eaff;
+  transform: translateY(-1px);
+}
+
 .agreement-list {
   display: grid;
   padding: 5px 12px;
@@ -507,6 +533,81 @@
   color: #3d485b;
   background: #f7f8fa;
   transform: translateY(-1px);
+}
+
+.verification-panel {
+  display: grid;
+  margin-top: 17px;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.verification-mail-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  color: #5163ce;
+  background: linear-gradient(145deg, #f2f4ff, #e7eaff);
+  border: 1px solid rgba(91, 109, 221, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(77, 95, 207, 0.13);
+  place-items: center;
+}
+
+.verification-email {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #36425a;
+  font-size: 12px;
+}
+
+.verification-timer {
+  display: grid;
+  width: 100%;
+  padding: 14px;
+  color: #4b5dca;
+  background: #f5f6ff;
+  border: 1px solid rgba(91, 109, 221, 0.11);
+  border-radius: 15px;
+  gap: 4px;
+}
+
+.verification-timer span {
+  color: #69758a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.verification-timer b {
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+
+.verification-timer small {
+  color: #8791a2;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.verification-timer.is-expired {
+  color: #b33f53;
+  background: #fff3f4;
+  border-color: rgba(211, 79, 99, 0.13);
+}
+
+.verification-retention {
+  margin: 0;
+  color: #7a8494;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.verification-actions {
+  display: grid;
+  width: 100%;
+  gap: 9px;
 }
 
 @media (min-width: 641px) and (max-height: 680px) {
@@ -555,7 +656,8 @@
 
   .auth-submit,
   .demo-login,
-  .back-button {
+  .back-button,
+  .resend-verification-button {
     min-height: 44px;
   }
 
@@ -675,14 +777,16 @@
   .auth-checkbox > span,
   .auth-submit,
   .demo-login,
-  .back-button {
+  .back-button,
+  .resend-verification-button {
     transition-duration: 0.01ms;
   }
 
   .auth-input-wrap:focus-within,
   .auth-submit:hover,
   .demo-login:hover,
-  .back-button:hover {
+  .back-button:hover,
+  .resend-verification-button:hover {
     transform: none;
   }
 }

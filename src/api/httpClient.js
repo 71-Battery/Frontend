@@ -16,6 +16,10 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 const SAFE_ERROR_MESSAGES = {
   INVALID_CREDENTIALS: '이메일과 비밀번호를 확인해 주세요.',
   EMAIL_NOT_VERIFIED: '학교 이메일 인증을 완료한 뒤 다시 로그인해 주세요.',
+  VERIFICATION_RESEND_TOO_SOON: '잠시 후 인증 메일을 다시 요청해 주세요.',
+  VERIFICATION_NOT_PENDING: '인증 대기 중인 계정을 확인할 수 없습니다.',
+  UNVERIFIED_ACCOUNT_EXPIRED: '인증 대기 시간이 만료되었습니다. 다시 회원가입해 주세요.',
+  VERIFICATION_RESEND_FAILED: '인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.',
   ACCOUNT_LOCKED: '로그인 시도가 잠시 제한되었습니다. 잠시 후 다시 시도해 주세요.',
   VALIDATION_ERROR: '입력한 내용을 다시 확인해 주세요.',
   CSRF_TOKEN_INVALID: '보안 확인이 만료되었습니다. 다시 시도해 주세요.',

@@ -5,6 +5,7 @@ import { getProfile } from './platformApi.js'
 export const AUTH_ENDPOINTS = {
   login: '/api/auth/login',
   signup: '/api/auth/signup',
+  resendVerification: '/api/auth/resend-verification',
   logout: '/api/auth/logout',
   confirmation: '/api/auth/confirmation',
 }
@@ -23,12 +24,6 @@ function normalizeAuthPayload(payload) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new ApiError('인증 응답을 확인할 수 없습니다. 다시 시도해 주세요.', {
       code: 'INVALID_AUTH_RESPONSE',
-    })
-  }
-
-  if (data.verificationRequired === true && !getAccessToken(data)) {
-    throw new ApiError('학교 이메일로 보낸 인증 링크를 확인한 뒤 로그인해 주세요.', {
-      code: 'EMAIL_VERIFICATION_REQUIRED',
     })
   }
 
@@ -56,6 +51,10 @@ function normalizeAuthPayload(payload) {
       permissions: {
         canManageContent: data?.permissions?.canManageContent === true,
       },
+      verificationRequired: data.verificationRequired === true,
+      verificationExpiresAt: data.verificationExpiresAt || null,
+      resendAvailableAt: data.resendAvailableAt || null,
+      accountExpiresAt: data.accountExpiresAt || null,
       meta: payload?.meta && typeof payload.meta === 'object' ? payload.meta : {},
     },
   }
@@ -95,6 +94,15 @@ export async function signup(account) {
     },
   })
   return hydrateAuthenticatedProfile(payload)
+}
+
+export async function resendVerification(email) {
+  const payload = await apiRequest(AUTH_ENDPOINTS.resendVerification, {
+    method: 'POST',
+    body: { email },
+    timeoutMs: 30000,
+  })
+  return normalizeAuthPayload(payload)
 }
 
 export async function logout({ authToken, signal } = {}) {
