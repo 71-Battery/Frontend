@@ -30,6 +30,7 @@
   position: relative;
   min-height: 100vh;
   overflow-x: clip;
+  color: var(--text);
   background:
     radial-gradient(circle at 8% 8%, rgba(115, 135, 244, 0.1), transparent 26rem),
     radial-gradient(circle at 90% 85%, rgba(63, 190, 160, 0.07), transparent 28rem),
@@ -151,7 +152,7 @@
 }
 .account-avatar.large { width: 43px; height: 43px; border-radius: 14px; font-size: 14px; }
 .account-copy { display: grid; gap: 3px; }
-.account-summary strong { font-size: 12px; }
+.account-summary strong { color: var(--text); font-size: 12px; }
 .account-summary small { color: var(--text-faint); font-size: 10px; }
 .profile-chevron { color: var(--text-faint); transition: transform 180ms ease; }
 .account-summary[aria-expanded='true'] .profile-chevron { transform: rotate(180deg); }
