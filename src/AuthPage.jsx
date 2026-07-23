@@ -154,6 +154,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     }
 
     gsap.killTweensOf([stage, panel])
+    gsap.set(stage, { overflow: 'hidden' })
     if (previousHeight === null) {
       gsap.set(stage, { height: nextHeight })
     } else {
@@ -168,12 +169,12 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
       { autoAlpha: 0, x: movingForward ? 24 : -24, filter: 'blur(3px)' },
       { autoAlpha: 1, x: 0, filter: 'blur(0px)', duration: 0.36, ease: 'power2.out', clearProps: 'opacity,visibility,transform,filter' },
     )
-    const clearHeight = gsap.delayedCall(0.44, () => gsap.set(stage, { clearProps: 'height' }))
+    const clearHeight = gsap.delayedCall(0.44, () => gsap.set(stage, { clearProps: 'height,overflow' }))
 
     return () => {
       clearHeight.kill()
       gsap.killTweensOf([stage, panel])
-      gsap.set(stage, { clearProps: 'height' })
+      gsap.set(stage, { clearProps: 'height,overflow' })
     }
   }, [mode, signupStep])
 
