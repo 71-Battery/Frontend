@@ -140,7 +140,10 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     const panel = stage?.querySelector('.auth-stage-panel')
     if (!stage || !panel) return undefined
 
-    const nextHeight = panel.scrollHeight
+    const stageStyle = window.getComputedStyle(stage)
+    const stageVerticalPadding =
+      Number.parseFloat(stageStyle.paddingTop) + Number.parseFloat(stageStyle.paddingBottom)
+    const nextHeight = panel.scrollHeight + stageVerticalPadding
     const previousHeight = previousStageHeightRef.current
     const modeChanged = previousModeRef.current !== mode
     const movingForward = modeChanged ? mode === 'signup' : signupStep >= previousSignupStepRef.current

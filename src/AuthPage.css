@@ -111,9 +111,13 @@
 }
 
 .auth-stage-shell {
+  margin-top: -32px;
   margin-right: -48px;
+  margin-bottom: -32px;
   margin-left: -48px;
+  padding-top: 32px;
   padding-right: 48px;
+  padding-bottom: 32px;
   padding-left: 48px;
   overflow: visible;
 }
