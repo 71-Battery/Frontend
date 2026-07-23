@@ -6,6 +6,7 @@ export const AUTH_ENDPOINTS = {
   login: '/api/auth/login',
   signup: '/api/auth/signup',
   logout: '/api/auth/logout',
+  confirmation: '/api/auth/confirmation',
 }
 
 function getAccessToken(data) {
@@ -99,6 +100,14 @@ export async function signup(account) {
 export async function logout({ authToken, signal } = {}) {
   return apiRequest(AUTH_ENDPOINTS.logout, {
     method: 'POST',
+    authToken,
+    signal,
+    timeoutMs: 30000,
+  })
+}
+
+export async function verifyEmailConfirmation({ authToken, signal } = {}) {
+  return apiRequest(AUTH_ENDPOINTS.confirmation, {
     authToken,
     signal,
     timeoutMs: 30000,

@@ -27,7 +27,11 @@ import {
   UserRound,
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
-import { logout as logoutWithBackend } from './api/authApi.js'
+import EmailConfirmationPage from './EmailConfirmationPage.jsx'
+import {
+  logout as logoutWithBackend,
+  verifyEmailConfirmation,
+} from './api/authApi.js'
 import { mockLogout } from './api/mockAuthApi.js'
 import {
   createAdminRule,
@@ -1136,9 +1140,26 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   )
 }
 
-function App() {
+function App({ initialRoute = { kind: 'app' } }) {
   const [session, setSession] = useState(null)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [confirmationStatus, setConfirmationStatus] = useState('checking')
+
+  useEffect(() => {
+    if (initialRoute.kind !== 'email-confirmation') return undefined
+
+    const controller = new AbortController()
+    verifyEmailConfirmation({
+      authToken: initialRoute.accessToken,
+      signal: controller.signal,
+    })
+      .then(() => setConfirmationStatus('complete'))
+      .catch(() => {
+        if (!controller.signal.aborted) window.location.replace('/')
+      })
+
+    return () => controller.abort()
+  }, [initialRoute])
 
   function handleAuthenticated(authenticated) {
     setSession({
@@ -1169,6 +1190,9 @@ function App() {
     }
   }
 
+  if (initialRoute.kind === 'email-confirmation') {
+    return <EmailConfirmationPage status={confirmationStatus} />
+  }
   if (!session) return <AuthPage onAuthenticated={handleAuthenticated} />
   return (
     <MainDashboard
