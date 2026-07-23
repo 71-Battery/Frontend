@@ -4,8 +4,10 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronRight,
   Eye,
   EyeOff,
+  FileText,
   GraduationCap,
   LoaderCircle,
   LockKeyhole,
@@ -14,6 +16,7 @@ import {
   RefreshCw,
   Sparkles,
   UserRound,
+  X,
 } from 'lucide-react'
 import {
   login as loginWithBackend,
@@ -21,6 +24,7 @@ import {
   signup as signupWithBackend,
 } from './api/authApi.js'
 import { createDemoSession } from './api/mockAuthApi.js'
+import { getLegalDocument } from './legalDocuments.js'
 import './AuthPage.css'
 
 const initialLogin = { email: '', password: '' }
@@ -127,6 +131,78 @@ function PasswordToggle({ visible, onToggle, controlsLabel, disabled }) {
   )
 }
 
+function LegalDocumentModal({ legalDocument, onClose }) {
+  const closeButtonRef = useRef(null)
+
+  useEffect(() => {
+    if (!legalDocument) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeButtonRef.current?.focus()
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose()
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [legalDocument, onClose])
+
+  if (!legalDocument) return null
+
+  const titleId = `legal-document-${legalDocument.id}`
+
+  return (
+    <div
+      className="legal-modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <section className="legal-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <header className="legal-modal-header">
+          <span><FileText size={20} /></span>
+          <div>
+            <small>{legalDocument.badge} 약관 · 시행일 {legalDocument.effectiveDate}</small>
+            <h2 id={titleId}>{legalDocument.title}</h2>
+            <p>{legalDocument.summary}</p>
+          </div>
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="약관 닫기">
+            <X size={18} />
+          </button>
+        </header>
+        <div className="legal-modal-content" tabIndex="0">
+          {legalDocument.notice && (
+            <div className="legal-draft-notice" role="note">
+              <strong>정식 운영 전 확인</strong>
+              <p>{legalDocument.notice}</p>
+            </div>
+          )}
+          {legalDocument.sections.map((section) => (
+            <article className="legal-clause" key={section.title}>
+              <h3>{section.title}</h3>
+              {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              {section.items?.length > 0 && (
+                <ul>
+                  {section.items.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              )}
+            </article>
+          ))}
+        </div>
+        <footer className="legal-modal-footer">
+          <p>전문을 확인한 뒤 회원가입 화면의 체크박스에서 동의해 주세요.</p>
+          <button type="button" onClick={onClose}>확인</button>
+        </footer>
+      </section>
+    </div>
+  )
+}
+
 function AuthPage({ onAuthenticated, initialError = '' }) {
   const [mode, setMode] = useState('login')
   const [signupStep, setSignupStep] = useState(1)
@@ -139,6 +215,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
   const [fieldErrors, setFieldErrors] = useState({})
   const [loginNeedsVerification, setLoginNeedsVerification] = useState(false)
   const [verification, setVerification] = useState(null)
+  const [legalDocument, setLegalDocument] = useState(null)
   const [clockNow, setClockNow] = useState(() => Date.now())
   const stageRef = useRef(null)
   const titleRef = useRef(null)
@@ -530,8 +607,14 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                         <TextField label="비밀번호" icon={LockKeyhole} type={passwordVisibility.signup ? 'text' : 'password'} value={signup.password} onChange={(event) => setSignup({ ...signup, password: event.target.value })} placeholder="비밀번호" autoComplete="new-password" suffix={<PasswordToggle visible={passwordVisibility.signup} onToggle={() => setPasswordVisibility((current) => ({ ...current, signup: !current.signup }))} controlsLabel="새 비밀번호" disabled={busy} />} error={fieldErrors.password} disabled={busy} />
                         <TextField label="비밀번호 확인" icon={LockKeyhole} type={passwordVisibility.confirm ? 'text' : 'password'} value={signup.passwordConfirm} onChange={(event) => setSignup({ ...signup, passwordConfirm: event.target.value })} placeholder="비밀번호" autoComplete="new-password" suffix={<PasswordToggle visible={passwordVisibility.confirm} onToggle={() => setPasswordVisibility((current) => ({ ...current, confirm: !current.confirm }))} controlsLabel="비밀번호 확인" disabled={busy} />} error={fieldErrors.passwordConfirm} disabled={busy} />
                         <div className="agreement-list" role="group" aria-label="약관 동의" aria-invalid={Boolean(fieldErrors.agreements)} aria-describedby={fieldErrors.agreements ? agreementsErrorId : undefined}>
-                          <label className="auth-checkbox"><input type="checkbox" checked={signup.terms} onChange={(event) => setSignup({ ...signup, terms: event.target.checked })} disabled={busy} /><span><Check size={13} /></span><b>[필수]</b> 이용약관 동의</label>
-                          <label className="auth-checkbox"><input type="checkbox" checked={signup.privacy} onChange={(event) => setSignup({ ...signup, privacy: event.target.checked })} disabled={busy} /><span><Check size={13} /></span><b>[필수]</b> 개인정보 처리 안내 동의</label>
+                          <div className="agreement-row">
+                            <label className="auth-checkbox agreement-check" aria-label="이용약관 동의"><input type="checkbox" checked={signup.terms} onChange={(event) => setSignup({ ...signup, terms: event.target.checked })} disabled={busy} /><span><Check size={13} /></span><b>[필수]</b></label>
+                            <p><button type="button" onClick={() => setLegalDocument(getLegalDocument('terms'))}>이용약관 동의<ChevronRight size={14} /></button></p>
+                          </div>
+                          <div className="agreement-row">
+                            <label className="auth-checkbox agreement-check" aria-label="개인정보 수집 이용 동의"><input type="checkbox" checked={signup.privacy} onChange={(event) => setSignup({ ...signup, privacy: event.target.checked })} disabled={busy} /><span><Check size={13} /></span><b>[필수]</b></label>
+                            <p><button type="button" onClick={() => setLegalDocument(getLegalDocument('privacy'))}>개인정보 수집·이용 동의<ChevronRight size={14} /></button></p>
+                          </div>
                           <label className="auth-checkbox"><input type="checkbox" checked={signup.notifications} onChange={(event) => setSignup({ ...signup, notifications: event.target.checked })} disabled={busy} /><span><Check size={13} /></span><b>[선택]</b> 중요 일정 알림 받기</label>
                           {fieldErrors.agreements && <small className="field-error" id={agreementsErrorId}>{fieldErrors.agreements}</small>}
                         </div>
@@ -572,6 +655,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
           </div>
         </section>
       </main>
+      <LegalDocumentModal legalDocument={legalDocument} onClose={() => setLegalDocument(null)} />
     </div>
   )
 }

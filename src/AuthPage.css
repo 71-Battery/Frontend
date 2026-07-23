@@ -517,6 +517,259 @@
   padding: 2px 0 6px;
 }
 
+.agreement-row {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px;
+}
+
+.agreement-row .agreement-check {
+  min-height: 36px;
+  padding-right: 5px;
+  gap: 7px;
+}
+
+.agreement-row p {
+  min-width: 0;
+  margin: 0;
+}
+
+.agreement-row p > button {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  padding: 0;
+  align-items: center;
+  justify-content: space-between;
+  color: #596477;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 10px;
+  gap: 8px;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.agreement-row p > button:hover {
+  color: #4e5fc1;
+  background: rgba(91, 109, 221, 0.05);
+}
+
+.agreement-row p > button svg {
+  flex: 0 0 auto;
+  color: #9aa3b0;
+}
+
+.legal-modal-backdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(14, 20, 33, 0.56);
+  backdrop-filter: blur(9px);
+  place-items: center;
+  animation: legal-backdrop-in 180ms ease-out;
+}
+
+.legal-modal {
+  display: grid;
+  width: min(720px, 100%);
+  max-height: min(820px, calc(100dvh - 48px));
+  overflow: hidden;
+  color: #172033;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 24px;
+  box-shadow: 0 32px 90px rgba(10, 17, 31, 0.28);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  animation: legal-modal-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.legal-modal-header {
+  display: grid;
+  padding: 22px 22px 18px;
+  align-items: start;
+  border-bottom: 1px solid #e9ecf2;
+  grid-template-columns: 42px minmax(0, 1fr) 36px;
+  gap: 12px;
+}
+
+.legal-modal-header > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  color: #5264d2;
+  background: #eef0ff;
+  border-radius: 13px;
+  place-items: center;
+}
+
+.legal-modal-header > div {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.legal-modal-header small {
+  color: #69758a;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.legal-modal-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 19px;
+  letter-spacing: -0.035em;
+}
+
+.legal-modal-header p {
+  margin: 0;
+  color: #7a8494;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.legal-modal-header > button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  color: #7c8696;
+  background: #f4f6f9;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  place-items: center;
+}
+
+.legal-modal-header > button:hover {
+  color: #344057;
+  background: #eceff4;
+}
+
+.legal-modal-content {
+  padding: 8px 24px 24px;
+  overflow-y: auto;
+  outline: 0;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.legal-modal-content:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(91, 109, 221, 0.16);
+}
+
+.legal-draft-notice {
+  margin: 15px 0 2px;
+  padding: 13px 14px;
+  color: #865c22;
+  background: #fff7e9;
+  border: 1px solid rgba(207, 143, 48, 0.16);
+  border-radius: 13px;
+}
+
+.legal-draft-notice strong {
+  font-size: 10px;
+}
+
+.legal-draft-notice p {
+  margin: 5px 0 0;
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+.legal-clause {
+  padding: 18px 2px 2px;
+}
+
+.legal-clause + .legal-clause {
+  margin-top: 10px;
+  border-top: 1px solid #edf0f4;
+}
+
+.legal-clause h3 {
+  margin: 0 0 9px;
+  color: #2d394f;
+  font-size: 12px;
+  letter-spacing: -0.02em;
+}
+
+.legal-clause p,
+.legal-clause li {
+  color: #657084;
+  font-size: 10px;
+  line-height: 1.75;
+}
+
+.legal-clause p {
+  margin: 0;
+}
+
+.legal-clause p + p {
+  margin-top: 7px;
+}
+
+.legal-clause ul {
+  display: grid;
+  margin: 0;
+  padding-left: 18px;
+  gap: 4px;
+}
+
+.legal-clause li::marker {
+  color: #6576db;
+}
+
+.legal-modal-footer {
+  display: flex;
+  min-height: 66px;
+  padding: 11px 20px;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fb;
+  border-top: 1px solid #e9ecf2;
+  gap: 16px;
+}
+
+.legal-modal-footer p {
+  margin: 0;
+  color: #7a8494;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.legal-modal-footer button {
+  min-width: 86px;
+  min-height: 40px;
+  color: #fff;
+  background: #586bdc;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.legal-modal-footer button:hover {
+  background: #495bc8;
+}
+
+@keyframes legal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes legal-modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .signup-actions {
   display: grid;
   grid-template-columns: 96px 1fr;
@@ -768,6 +1021,52 @@
   .signup-actions {
     grid-template-columns: 88px 1fr;
   }
+
+  .legal-modal-backdrop {
+    padding: 10px;
+    place-items: end center;
+  }
+
+  .legal-modal {
+    max-height: calc(100dvh - 20px);
+    border-radius: 21px;
+  }
+
+  .legal-modal-header {
+    padding: 17px 16px 14px;
+    grid-template-columns: 36px minmax(0, 1fr) 34px;
+    gap: 9px;
+  }
+
+  .legal-modal-header > span {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  }
+
+  .legal-modal-header h2 {
+    font-size: 16px;
+  }
+
+  .legal-modal-header p {
+    display: none;
+  }
+
+  .legal-modal-content {
+    padding: 5px 17px 20px;
+  }
+
+  .legal-modal-footer {
+    padding: 10px 13px;
+  }
+
+  .legal-modal-footer p {
+    display: none;
+  }
+
+  .legal-modal-footer button {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -775,6 +1074,9 @@
   .auth-input-wrap,
   .password-toggle,
   .auth-checkbox > span,
+  .agreement-row p > button,
+  .legal-modal-backdrop,
+  .legal-modal,
   .auth-submit,
   .demo-login,
   .back-button,
