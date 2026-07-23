@@ -25,6 +25,7 @@ const SAFE_ERROR_MESSAGES = {
   DATA_PROVIDER_TIMEOUT: '학사 정보 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.',
   DATA_PROVIDER_UNAVAILABLE: '학사 정보 제공자가 일시적으로 응답하지 않습니다.',
   DATA_PROVIDER_INVALID_RESPONSE: '학사 정보 형식을 확인할 수 없습니다.',
+  STUDENT_IDENTITY_MISMATCH: '학교 이메일과 학번이 재학생 정보와 일치하지 않습니다.',
   STUDENT_PROFILE_NOT_FOUND: '연결된 학생 프로필을 찾을 수 없습니다. 학교 이메일과 정보 제공 동의를 확인해 주세요.',
   INVALID_REQUEST: '질문을 입력해 주세요.',
   QUERY_TOO_LONG: '질문은 1,000자 이하로 입력해 주세요.',
