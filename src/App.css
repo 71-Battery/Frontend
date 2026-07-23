@@ -662,6 +662,44 @@
 .timeline-row > b.accent { color: var(--accent-strong); background: var(--accent-soft); }
 .timeline-row > b.warning { color: #a6691e; background: var(--warning-soft); }
 
+.timeline-pagination {
+  display: flex;
+  margin-top: 16px;
+  padding-top: 16px;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+  gap: 7px;
+}
+
+.timeline-pagination button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  color: var(--text-soft);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  place-items: center;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.timeline-pagination button:hover {
+  color: var(--accent);
+  border-color: rgba(91, 114, 238, 0.25);
+  transform: translateY(-1px);
+}
+
+.timeline-pagination button.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 8px 18px rgba(91, 114, 238, 0.2);
+}
+
 .detail-panel {
   position: sticky;
   top: 20px;

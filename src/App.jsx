@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import {
   ArrowRight,
@@ -32,6 +32,13 @@ import {
   sendChat,
 } from './api/platformApi.js'
 import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourceMapper.js'
+import {
+  getSchedulePageCount,
+  getSchedulePageIndex,
+  getSchedulesForPage,
+  SCHEDULE_PAGE_DAYS,
+  SCHEDULE_WINDOW_DAYS,
+} from './api/scheduleMapper.js'
 import { useAcademicData } from './hooks/useAcademicData.js'
 import './App.css'
 
@@ -453,38 +460,59 @@ function TimelineView({
   selectedResourceId,
 }) {
   const [selectedId, setSelectedId] = useState(null)
+  const [pageIndex, setPageIndex] = useState(0)
+  const pageCount = useMemo(() => getSchedulePageCount(events), [events])
+  const pageEvents = useMemo(() => getSchedulesForPage(events, pageIndex), [events, pageIndex])
 
   useEffect(() => {
-    setSelectedId((current) => {
-      if (selectedResourceId && events.some((event) => event.id === selectedResourceId)) return selectedResourceId
-      if (current && events.some((event) => event.id === current)) return current
-      return events[0]?.id || null
-    })
+    const focusedEvent = events.find((event) => event.id === selectedResourceId)
+    const focusedPageIndex = getSchedulePageIndex(focusedEvent)
+    if (focusedPageIndex < 0) return
+    setPageIndex(focusedPageIndex)
+    setSelectedId(focusedEvent.id)
   }, [events, selectedResourceId])
 
-  const selected = events.find((event) => event.id === selectedId) || null
+  useEffect(() => {
+    if (pageIndex < pageCount) return
+    setPageIndex(pageCount - 1)
+  }, [pageCount, pageIndex])
+
+  useEffect(() => {
+    setSelectedId((current) => (
+      current && pageEvents.some((event) => event.id === current)
+        ? current
+        : pageEvents[0]?.id || null
+    ))
+  }, [pageEvents])
+
+  const selected = pageEvents.find((event) => event.id === selectedId) || null
+
+  function selectPage(nextPageIndex) {
+    setPageIndex(nextPageIndex)
+    setSelectedId(getSchedulesForPage(events, nextPageIndex)[0]?.id || null)
+  }
 
   return (
     <div className="content-view">
       <ViewHeading
         eyebrow="ACADEMIC TIMELINE"
         title="학사 타임라인"
-        description="Data-GSM 학사 일정을 내 학년과 가까운 날짜 순으로 확인합니다."
+        description={`오늘부터 ${SCHEDULE_WINDOW_DAYS}일 동안의 학사 일정을 날짜순으로 확인합니다.`}
         meta={meta}
         demo={isDemo}
       />
       <div className="timeline-layout">
         <section className="timeline-panel glass-panel reveal" aria-label="학사 일정 목록">
           <div className="content-panel-heading">
-            <div><strong>다가오는 일정</strong><span>가까운 순서로 정리했어요.</span></div>
+            <div><strong>다가오는 일정</strong><span>{SCHEDULE_PAGE_DAYS}일씩 나누어 가까운 순서로 정리했어요.</span></div>
             <CalendarDays size={19} />
           </div>
           {status === 'error' && events.length > 0 && (
             <div className="partial-error" role="status"><CircleAlert size={15} />{error}<button type="button" onClick={retry}>다시 시도</button></div>
           )}
-          {events.length > 0 ? (
+          {pageEvents.length > 0 ? (
             <ol className="timeline-list">
-              {events.map((event) => (
+              {pageEvents.map((event) => (
                 <li key={event.id}>
                   <button
                     className={`timeline-row ${selectedId === event.id ? 'selected' : ''}`}
@@ -504,7 +532,7 @@ function TimelineView({
                 </li>
               ))}
             </ol>
-          ) : (
+          ) : events.length === 0 ? (
             <PanelFeedback
               status={status}
               error={error}
@@ -512,6 +540,28 @@ function TimelineView({
               emptyTitle="조회 기간에 등록된 일정이 없어요."
               emptyDescription="새 일정이 등록되면 이곳에 표시됩니다."
             />
+          ) : (
+            <div className="empty-content data-feedback">
+              <CalendarDays size={23} />
+              <strong>이 기간에는 일정이 없어요.</strong>
+              <span>다른 번호의 목록을 확인해 보세요.</span>
+            </div>
+          )}
+          {events.length > 0 && (
+            <nav className="timeline-pagination" aria-label="학사 일정 목록 페이지">
+              {Array.from({ length: pageCount }, (_, index) => (
+                <button
+                  className={pageIndex === index ? 'active' : ''}
+                  type="button"
+                  key={index}
+                  onClick={() => selectPage(index)}
+                  aria-current={pageIndex === index ? 'page' : undefined}
+                  aria-label={`${index + 1}번 목록`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </nav>
           )}
         </section>
 

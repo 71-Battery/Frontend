@@ -1,6 +1,8 @@
 const SEOUL_TIME_ZONE = 'Asia/Seoul'
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 const VALID_GRADES = new Set([1, 2, 3])
+export const SCHEDULE_WINDOW_DAYS = 90
+export const SCHEDULE_PAGE_DAYS = 30
 
 function toDateParts(value) {
   const match = DATE_PATTERN.exec(value)
@@ -56,13 +58,30 @@ export function isStrictScheduleDate(value) {
 export function getDefaultScheduleRange(now = new Date()) {
   const today = getSeoulDateParts(now)
   const fromDate = formatDateParts(today)
-  const lastDayOfNextMonth = new Date(Date.UTC(today.year, today.month + 1, 0))
+  const lastDay = new Date(Date.UTC(today.year, today.month - 1, today.day) + (SCHEDULE_WINDOW_DAYS - 1) * 86_400_000)
   const toDate = formatDateParts({
-    year: lastDayOfNextMonth.getUTCFullYear(),
-    month: lastDayOfNextMonth.getUTCMonth() + 1,
-    day: lastDayOfNextMonth.getUTCDate(),
+    year: lastDay.getUTCFullYear(),
+    month: lastDay.getUTCMonth() + 1,
+    day: lastDay.getUTCDate(),
   })
   return { fromDate, toDate }
+}
+
+export function getSchedulePageIndex(schedule) {
+  const days = Number(schedule?.ddayValue)
+  if (!Number.isInteger(days) || days < 0 || days >= SCHEDULE_WINDOW_DAYS) return -1
+  return Math.floor(days / SCHEDULE_PAGE_DAYS)
+}
+
+export function getSchedulePageCount(schedules) {
+  const lastPageIndex = (Array.isArray(schedules) ? schedules : [])
+    .reduce((maximum, schedule) => Math.max(maximum, getSchedulePageIndex(schedule)), -1)
+  return Math.max(1, lastPageIndex + 1)
+}
+
+export function getSchedulesForPage(schedules, pageIndex) {
+  return (Array.isArray(schedules) ? schedules : [])
+    .filter((schedule) => getSchedulePageIndex(schedule) === pageIndex)
 }
 
 export function formatTargetGrades(targetGrades) {
