@@ -55,7 +55,7 @@ export function isStrictScheduleDate(value) {
 
 export function getDefaultScheduleRange(now = new Date()) {
   const today = getSeoulDateParts(now)
-  const fromDate = formatDateParts({ year: today.year, month: today.month, day: 1 })
+  const fromDate = formatDateParts(today)
   const lastDayOfNextMonth = new Date(Date.UTC(today.year, today.month + 1, 0))
   const toDate = formatDateParts({
     year: lastDayOfNextMonth.getUTCFullYear(),
@@ -142,9 +142,8 @@ export function mapAndSortSchedules(rawSchedules, studentGrade, now = new Date()
     .map((schedule) => mapSchedule(schedule, studentGrade, now))
     .filter(Boolean)
     .sort((left, right) => (
-      importanceOrder[left.importance] - importanceOrder[right.importance]
-      || Number(left.ddayValue < 0) - Number(right.ddayValue < 0)
-      || left.scheduleDate.localeCompare(right.scheduleDate)
+      left.scheduleDate.localeCompare(right.scheduleDate)
+      || importanceOrder[left.importance] - importanceOrder[right.importance]
       || left.title.localeCompare(right.title, 'ko')
     ))
 }
