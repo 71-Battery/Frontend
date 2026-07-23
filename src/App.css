@@ -873,7 +873,7 @@
 .chat-composer button:hover:not(:disabled) { background: var(--accent-strong); transform: translateY(-2px) scale(1.02); }
 .ai-notice { display: flex; align-items: center; justify-content: center; margin: 10px 0 0; color: var(--text-faint); font-size: 9px; gap: 5px; }
 
-.guidance-panel { align-self: stretch; padding: 25px; }
+.agenda-panel { align-self: start; padding: 25px; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; }
 .panel-heading h2 { margin: 0; color: var(--text); font-size: 19px; letter-spacing: -0.035em; }
 .panel-heading button { width: 39px; height: 39px; }
@@ -972,72 +972,6 @@
 
 .agenda-state span { color: var(--text-soft); font-size: 9px; line-height: 1.55; }
 .agenda-state.empty { color: var(--text-faint); }
-
-.guide-section-heading {
-  display: flex;
-  margin-top: 20px;
-  padding-top: 18px;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--border);
-}
-
-.guide-section-heading p {
-  margin: 0 0 4px;
-  color: var(--accent);
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.1em;
-}
-
-.guide-section-heading h3 {
-  margin: 0;
-  color: var(--text);
-  font-size: 15px;
-  letter-spacing: -0.03em;
-}
-
-.guide-section-heading > button {
-  display: grid;
-  width: 35px;
-  height: 35px;
-  color: var(--text-soft);
-  background: rgba(255, 255, 255, 0.68);
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  cursor: pointer;
-  place-items: center;
-}
-
-.guide-section-heading > button:hover:not(:disabled) {
-  color: var(--accent);
-  background: var(--surface);
-}
-
-.student-context { display: flex; align-items: center; margin-top: 13px; padding: 13px; background: rgba(246, 247, 251, 0.82); border: 1px solid var(--border); border-radius: 15px; gap: 10px; }
-.student-context > span { display: grid; width: 35px; height: 35px; color: var(--accent); background: var(--accent-soft); border-radius: 11px; place-items: center; }
-.student-context > div { display: grid; gap: 3px; }
-.student-context strong { color: var(--text); font-size: 11px; }
-.student-context small { color: var(--text-faint); font-size: 9px; }
-
-.guide-state { display: flex; min-height: 260px; flex-direction: column; align-items: center; justify-content: center; color: var(--accent); text-align: center; }
-.guide-state p { max-width: 240px; margin: 12px 0 0; color: var(--text-soft); font-size: 11px; line-height: 1.6; }
-.guide-state.error { color: var(--urgent); }
-.guide-state button { margin-top: 14px; padding: 9px 12px; color: var(--urgent); background: var(--urgent-soft); border: 0; border-radius: 10px; cursor: pointer; font-size: 10px; font-weight: 700; }
-.guide-content { margin-top: 17px; }
-.guide-summary { display: flex; padding: 16px; color: #fff; background: linear-gradient(145deg, #667aeb, #5365cf); border-radius: 17px; box-shadow: 0 12px 28px rgba(83, 101, 207, 0.2); gap: 11px; }
-.guide-summary > svg { flex: 0 0 auto; margin-top: 2px; }
-.guide-summary strong { font-size: 12px; line-height: 1.5; }
-.guide-summary p { margin: 7px 0 0; color: rgba(255, 255, 255, 0.76); font-size: 10px; line-height: 1.6; }
-
-.priority-list { display: grid; margin-top: 22px; gap: 4px; }
-.list-label { margin-bottom: 5px; color: var(--text-faint); font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-.priority-list > div { display: flex; padding: 11px 0; align-items: flex-start; border-bottom: 1px solid var(--border); gap: 9px; }
-.priority-list svg { flex: 0 0 auto; margin-top: 1px; color: var(--mint); }
-.priority-list p { margin: 0; color: #556174; font-size: 10px; line-height: 1.55; }
-.guide-tip { display: flex; margin-top: 17px; padding: 13px; color: #9a681f; background: var(--warning-soft); border-radius: 13px; gap: 8px; }
-.guide-tip svg { flex: 0 0 auto; }
-.guide-tip p { margin: 0; font-size: 9px; line-height: 1.6; }
 
 .single-view .chat-panel {
   min-height: min(720px, calc(100vh - 218px));
@@ -1677,7 +1611,6 @@
 }
 .dashboard-shell[data-theme='dark'] .icon-action:hover:not(:disabled),
 .dashboard-shell[data-theme='dark'] .panel-heading button:hover,
-.dashboard-shell[data-theme='dark'] .guide-section-heading > button,
 .dashboard-shell[data-theme='dark'] .agenda-list button:hover,
 .dashboard-shell[data-theme='dark'] .primary-tabs button.active,
 .dashboard-shell[data-theme='dark'] .suggestion-list button:hover,
@@ -1703,7 +1636,6 @@
   box-shadow: var(--shadow), inset 0 0 0 1px rgba(220, 229, 247, 0.035);
 }
 .dashboard-shell[data-theme='dark'] .overview-links > button,
-.dashboard-shell[data-theme='dark'] .student-context,
 .dashboard-shell[data-theme='dark'] .answer-source-document,
 .dashboard-shell[data-theme='dark'] .notice-search,
 .dashboard-shell[data-theme='dark'] .saved-card {
@@ -1752,7 +1684,6 @@
 .dashboard-shell[data-theme='dark'] .calendar-day.outside-month {
   background: rgba(19, 27, 42, 0.78);
 }
-.dashboard-shell[data-theme='dark'] .priority-list p { color: var(--text-soft); }
 .dashboard-shell[data-theme='dark'] .source-badge.demo {
   color: var(--text-soft) !important;
   background: var(--surface-muted);
@@ -1768,7 +1699,7 @@
 @media (max-width: 900px) {
   .dashboard-grid { grid-template-columns: 1fr; min-height: auto; }
   .chat-panel { min-height: 650px; }
-  .guidance-panel { min-height: auto; }
+  .agenda-panel { min-height: auto; }
   .conversation { max-height: 410px; }
   .timeline-layout,
   .notice-layout { grid-template-columns: 1fr; }
@@ -1796,7 +1727,7 @@
   .dashboard-grid { gap: 14px; }
   .chat-panel,
   .overview-panel,
-  .guidance-panel { padding: 20px; border-radius: 21px; }
+  .agenda-panel { padding: 20px; border-radius: 21px; }
   .chat-panel { min-height: calc(100vh - 104px); }
   .single-view .chat-panel { min-height: calc(100vh - 144px); }
   .chat-heading h1 { font-size: 21px; }

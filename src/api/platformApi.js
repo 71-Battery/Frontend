@@ -1,5 +1,5 @@
 import { ApiError, apiRequest, unwrapData } from './httpClient.js'
-import { normalizeAiSource, normalizeChatPayload } from './chatMapper.js'
+import { normalizeChatPayload } from './chatMapper.js'
 import { normalizeProfile } from './profileMapper.js'
 import { mapAndSortSchedules } from './scheduleMapper.js'
 import {
@@ -13,7 +13,6 @@ export const PLATFORM_ENDPOINTS = Object.freeze({
   health: '/health',
   supabaseHealth: '/supabase-health',
   chat: '/api/v1/chat',
-  guidance: '/api/guidance',
   adminRules: '/api/admin/rules',
   profile: '/api/profile',
   schedules: '/api/schedules',
@@ -25,11 +24,6 @@ export const PLATFORM_ENDPOINTS = Object.freeze({
 
 function asText(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback
-}
-
-function asTextList(value) {
-  if (!Array.isArray(value)) return []
-  return value.map((item) => asText(typeof item === 'string' ? item : item?.title || item?.text)).filter(Boolean)
 }
 
 function getMeta(payload, data) {
@@ -153,26 +147,6 @@ export async function sendChat(message, { authToken, signal } = {}) {
   const result = normalizeChatPayload(payload)
   if (!result) throw new ApiError('AI 답변 형식을 확인할 수 없습니다.', { code: 'INVALID_CHAT_RESPONSE' })
   return result
-}
-
-export async function requestGuidance({ topic, authToken, signal } = {}) {
-  const payload = await apiRequest(PLATFORM_ENDPOINTS.guidance, {
-    method: 'POST',
-    body: {
-      topic: asText(topic, '지금 해야 할 학사 활동'),
-    },
-    authToken,
-    signal,
-  })
-  const data = unwrapData(payload) || {}
-  return {
-    title: asText(data.title || data.headline, '나를 위한 학사 가이드'),
-    summary: asText(data.answer || data.summary || data.description, '학년과 학과를 바탕으로 필요한 정보를 정리했어요.'),
-    priorities: asTextList(data.priorities || data.actions || data.todo),
-    tips: asTextList(data.tips || data.recommendations),
-    sources: (Array.isArray(data.sources) ? data.sources : []).map(normalizeAiSource).filter(Boolean),
-    updatedAt: data.updatedAt || null,
-  }
 }
 
 export async function getAdminRules({ authToken, signal } = {}) {

@@ -1,7 +1,6 @@
 import {
   lazy,
   Suspense,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -17,7 +16,6 @@ import {
   BookmarkCheck,
   BookOpenText,
   CalendarDays,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -37,7 +35,6 @@ import {
   ShieldCheck,
   Sparkles,
   Sun,
-  UserRound,
   X,
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
@@ -51,7 +48,6 @@ import {
   createAdminRule,
   getAdminRules,
   getProfile,
-  requestGuidance,
   sendChat,
 } from './api/platformApi.js'
 import {
@@ -96,23 +92,6 @@ const suggestions = [
   '기업 협력사별 현장실습과 채용 연계 기회를 알려줘',
   '실무프로젝트가 교육과정에서 어떻게 진행되는지 알려줘',
 ]
-
-const demoGuide = {
-  title: '2학년 소프트웨어개발 맞춤 가이드',
-  summary: '지금은 실무 프로젝트를 정리하고 인턴십 지원 자료를 준비할 시기예요.',
-  priorities: [
-    '실무 프로젝트 역할과 사용 기술을 한 문장으로 정리하기',
-    'GitHub 대표 저장소의 README와 배포 주소 점검하기',
-    '인턴십 지원에 사용할 이력서 초안 만들기',
-  ],
-  tips: ['프로젝트 결과보다 문제 해결 과정과 본인 기여도를 구체적으로 기록하세요.'],
-  sources: [{
-    type: RESOURCE_TYPES.SCHEDULE,
-    id: 'schedule-project',
-    title: '실무프로젝트 중간보고서 제출',
-    date: '2026-07-25',
-  }],
-}
 
 const navItems = [
   { id: 'home', label: '홈', icon: House },
@@ -481,51 +460,12 @@ function AgendaGroup({ label, items, onNavigate, tone }) {
   )
 }
 
-function GuidancePanel({
-  user,
-  authToken,
-  schedules,
-  scheduleStatus,
-  onNavigate,
-  onSourceSelect,
-}) {
-  const [guide, setGuide] = useState(user.dataSource === 'demo' ? demoGuide : null)
-  const [status, setStatus] = useState(user.dataSource === 'demo' ? 'ready' : 'loading')
-  const [error, setError] = useState('')
+function TodayAgendaPanel({ schedules, scheduleStatus, onNavigate }) {
   const agenda = getHomeAgenda(schedules, 3)
   const hasAgenda = agenda.today.length > 0 || agenda.upcoming.length > 0
 
-  const loadGuide = useCallback(async (signal) => {
-    if (user.dataSource === 'demo') {
-      setGuide(demoGuide)
-      setStatus('ready')
-      return
-    }
-    setStatus('loading')
-    setError('')
-    try {
-      const response = await requestGuidance({
-        topic: '지금 해야 할 학사 활동',
-        authToken,
-        signal,
-      })
-      setGuide(response)
-      setStatus('ready')
-    } catch (requestError) {
-      if (requestError.name === 'AbortError') return
-      setError(requestError.message || '맞춤 가이드를 불러오지 못했습니다.')
-      setStatus('error')
-    }
-  }, [authToken, user])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    loadGuide(controller.signal)
-    return () => controller.abort()
-  }, [loadGuide])
-
   return (
-    <aside className="guidance-panel glass-panel reveal" aria-labelledby="agenda-title">
+    <aside className="agenda-panel glass-panel reveal" aria-labelledby="agenda-title">
       <div className="panel-heading">
         <div><p>TODAY &amp; NEXT</p><h2 id="agenda-title">오늘 확인할 내용</h2></div>
         <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 타임라인 전체 보기"><ArrowRight size={17} /></button>
@@ -548,31 +488,6 @@ function GuidancePanel({
           </div>
         )}
       </div>
-      <div className="guide-section-heading">
-        <div><p>PERSONALIZED</p><h3 id="guide-title">맞춤 학사 가이드</h3></div>
-        <button type="button" onClick={() => loadGuide()} disabled={status === 'loading'} aria-label="가이드 새로고침"><RefreshCw className={status === 'loading' ? 'spin' : ''} size={17} /></button>
-      </div>
-      <div className="student-context">
-        <span><UserRound size={16} /></span>
-        <div><strong>{getGrade(user)} · {getDepartment(user)}</strong><small>{user.specialty || '관심 전공 미설정'}</small></div>
-      </div>
-      {status === 'loading' && <div className="guide-state"><LoaderCircle className="spin" size={20} /><p>맞춤 정보를 정리하고 있어요.</p></div>}
-      {status === 'error' && <div className="guide-state error"><CircleAlert size={20} /><p>{error}</p><button type="button" onClick={() => loadGuide()}>다시 시도</button></div>}
-      {status === 'ready' && guide && (
-        <div className="guide-content">
-          <div className="guide-summary"><BookOpenText size={18} /><div><strong>{guide.title}</strong><p>{guide.summary}</p></div></div>
-          {guide.priorities.length > 0 && (
-            <div className="priority-list">
-              <span className="list-label">지금 할 일</span>
-              {guide.priorities.slice(0, 3).map((item) => <div key={item}><CheckCircle2 size={17} /><p>{item}</p></div>)}
-            </div>
-          )}
-          {guide.tips?.[0] && <div className="guide-tip"><Sparkles size={15} /><p>{guide.tips[0]}</p></div>}
-          {guide.sources?.length > 0 && (
-            <EvidenceList sources={guide.sources} onSourceSelect={onSourceSelect} label="가이드 근거" />
-          )}
-        </div>
-      )}
     </aside>
   )
 }
@@ -959,7 +874,7 @@ function TimelineView({
               <div><dt>분류</dt><dd>{selected.category}</dd></div>
               {selected.school.name && <div><dt>학교</dt><dd>{selected.school.name}</dd></div>}
             </dl>
-            <div className="detail-tip"><Sparkles size={17} /><span><strong>맞춤 안내</strong>프로필과 관련된 일정은 AI 가이드에서 준비 방법을 질문할 수 있어요.</span></div>
+            <div className="detail-tip"><Sparkles size={17} /><span><strong>맞춤 안내</strong>프로필과 관련된 일정은 AI 질문에서 준비 방법을 물어볼 수 있어요.</span></div>
             <SaveButton
               saved={savedKeys.has(makeResourceKey(RESOURCE_TYPES.SCHEDULE, selected.id))}
               busy={savedStatus === 'loading' || savingKeys.has(makeResourceKey(RESOURCE_TYPES.SCHEDULE, selected.id))}
@@ -1385,13 +1300,10 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
                 onNavigate={setActiveView}
                 savedCount={savedCount}
               />
-              <GuidancePanel
-                user={user}
-                authToken={authToken}
+              <TodayAgendaPanel
                 schedules={academic.schedules.items}
                 scheduleStatus={academic.schedules.status}
                 onNavigate={setActiveView}
-                onSourceSelect={handleSourceSelect}
               />
             </div>
           )}
