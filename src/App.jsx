@@ -78,6 +78,7 @@ import {
   SCHEDULE_WINDOW_DAYS,
 } from './api/scheduleMapper.js'
 import { useAcademicData } from './hooks/useAcademicData.js'
+import { useBrowserThemeColor } from './hooks/useBrowserThemeColor.js'
 import './App.css'
 
 const MarkdownMessage = lazy(() => import('./components/MarkdownMessage.jsx'))
@@ -1195,6 +1196,8 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const isDemo = user.dataSource === 'demo'
   const viewRef = useRef(null)
   const savedCount = academic.savedKeys.size
+
+  useBrowserThemeColor(preferences.theme)
 
   activeViewRef.current = activeView
   preferencesRef.current = preferences

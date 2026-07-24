@@ -1,8 +1,11 @@
 import { ArrowRight, CheckCircle2, GraduationCap, LoaderCircle } from 'lucide-react'
+import { useSystemBrowserThemeColor } from './hooks/useBrowserThemeColor.js'
 import './AuthPage.css'
 import './EmailConfirmationPage.css'
 
 export default function EmailConfirmationPage({ status = 'checking' }) {
+  useSystemBrowserThemeColor()
+
   const complete = status === 'complete'
 
   return (

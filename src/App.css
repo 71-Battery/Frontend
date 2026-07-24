@@ -74,6 +74,22 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 }
 
+.dashboard-shell[data-theme='light'] {
+  color-scheme: light;
+  --canvas: #f7f9fc;
+  --surface: #ffffff;
+  --surface-soft: #f9fafc;
+  --surface-muted: #f1f3f7;
+  --border: rgba(23, 32, 51, 0.085);
+  --border-strong: rgba(23, 32, 51, 0.14);
+  --text: #172033;
+  --text-soft: #687386;
+  --text-faint: #929aa8;
+  --glass-background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.68) 54%, rgba(241, 245, 251, 0.74));
+  --glass-border: rgba(255, 255, 255, 0.96);
+}
+
 .dashboard-shell::before {
   position: fixed;
   inset: 0;
@@ -1732,6 +1748,40 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard-shell[data-theme='light'] {
+    background: #f7f9fc;
+    --glass-background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86) 56%, rgba(245, 248, 252, 0.9));
+    --glass-border: rgba(255, 255, 255, 1);
+    --glass-shadow:
+      0 18px 45px rgba(42, 54, 83, 0.075),
+      inset 0 1px 0 #fff,
+      inset 0 -1px 0 rgba(100, 117, 145, 0.06);
+  }
+
+  .dashboard-shell[data-theme='light'] .primary-tabs,
+  .dashboard-shell[data-theme='light'] .chat-composer {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: #fff;
+  }
+
+  .dashboard-shell[data-theme='light'] .primary-tabs button.active,
+  .dashboard-shell[data-theme='light'] .overview-links > button,
+  .dashboard-shell[data-theme='light'] .suggestion-list button,
+  .dashboard-shell[data-theme='light'] .timeline-row.selected,
+  .dashboard-shell[data-theme='light'] .notice-search,
+  .dashboard-shell[data-theme='light'] .notice-row:hover,
+  .dashboard-shell[data-theme='light'] .notice-row.selected,
+  .dashboard-shell[data-theme='light'] .saved-card,
+  .dashboard-shell[data-theme='light'] .calendar-grid,
+  .dashboard-shell[data-theme='light'] .calendar-day {
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .dashboard-shell[data-theme='light'] .calendar-day.outside-month {
+    background: rgba(243, 246, 250, 0.82);
+  }
+
   .dashboard-header { width: calc(100% - 28px); height: 72px; }
   .main-brand > span { width: 38px; height: 38px; border-radius: 12px; }
   .main-brand strong { display: none; }

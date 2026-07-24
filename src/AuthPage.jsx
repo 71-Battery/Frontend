@@ -30,6 +30,7 @@ import {
   signup as signupWithBackend,
 } from './api/authApi.js'
 import { createDemoSession } from './api/mockAuthApi.js'
+import { useSystemBrowserThemeColor } from './hooks/useBrowserThemeColor.js'
 import { getLegalDocument } from './legalDocuments.js'
 import { displayEmail } from './utils/piiMask.js'
 import './AuthPage.css'
@@ -213,6 +214,8 @@ function LegalDocumentModal({ legalDocument, onClose }) {
 }
 
 function AuthPage({ onAuthenticated, initialError = '' }) {
+  useSystemBrowserThemeColor()
+
   const [mode, setMode] = useState('login')
   const [signupStep, setSignupStep] = useState(1)
   const [login, setLogin] = useState(initialLogin)
