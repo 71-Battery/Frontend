@@ -25,6 +25,7 @@ import {
 } from './api/authApi.js'
 import { createDemoSession } from './api/mockAuthApi.js'
 import { getLegalDocument } from './legalDocuments.js'
+import { displayEmail } from './utils/piiMask.js'
 import './AuthPage.css'
 
 const initialLogin = { email: '', password: '' }
@@ -217,6 +218,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
   const [fieldErrors, setFieldErrors] = useState({})
   const [loginNeedsVerification, setLoginNeedsVerification] = useState(false)
   const [verification, setVerification] = useState(null)
+  const [verificationEmailRevealed, setVerificationEmailRevealed] = useState(false)
   const [legalDocument, setLegalDocument] = useState(null)
   const [clockNow, setClockNow] = useState(() => Date.now())
   const stageRef = useRef(null)
@@ -318,6 +320,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     setFieldErrors({})
     setLoginNeedsVerification(false)
     setVerification(null)
+    setVerificationEmailRevealed(false)
     setPasswordVisibility({ login: false, signup: false, confirm: false })
   }
 
@@ -336,6 +339,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     setNotice(message)
     setFieldErrors({})
     setLoginNeedsVerification(false)
+    setVerificationEmailRevealed(false)
     window.requestAnimationFrame(() => titleRef.current?.focus())
   }
 
@@ -625,7 +629,19 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                     ) : (
                       <div className="verification-panel" aria-live="polite">
                         <span className="verification-mail-icon" aria-hidden="true"><MailCheck size={26} /></span>
-                        <strong className="verification-email">{verification?.email}</strong>
+                        <strong className="verification-email">
+                          {displayEmail(verification?.email, verificationEmailRevealed)}
+                          <button
+                            type="button"
+                            className="verification-email-toggle"
+                            onClick={() => setVerificationEmailRevealed((current) => !current)}
+                            aria-pressed={verificationEmailRevealed}
+                            aria-label={verificationEmailRevealed ? '이메일 가리기' : '이메일 표시하기'}
+                            title={verificationEmailRevealed ? '이메일 가리기' : '이메일 표시하기'}
+                          >
+                            {verificationEmailRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </strong>
                         <div className={`verification-timer ${verificationRemaining === 0 ? 'is-expired' : ''}`}>
                           <span>인증 링크 남은 시간</span>
                           <b>{verificationRemaining > 0 ? formatCountdown(verificationRemaining) : '만료됨'}</b>

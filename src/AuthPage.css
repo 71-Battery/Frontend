@@ -809,10 +809,32 @@
 }
 
 .verification-email {
+  display: inline-flex;
   max-width: 100%;
+  align-items: center;
   overflow-wrap: anywhere;
   color: #36425a;
   font-size: 12px;
+  gap: 6px;
+}
+
+.verification-email-toggle {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: #8b95a4;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  place-items: center;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.verification-email-toggle:hover {
+  color: #5163ce;
+  background: #eef0ff;
 }
 
 .verification-timer {

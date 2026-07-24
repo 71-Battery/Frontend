@@ -20,6 +20,8 @@ import {
   ChevronRight,
   ChevronDown,
   CircleAlert,
+  Eye,
+  EyeOff,
   GraduationCap,
   House,
   LoaderCircle,
@@ -67,6 +69,7 @@ import {
 } from './api/preferencesStore.js'
 import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourceMapper.js'
 import { buildCalendarMonth, getCalendarMonths } from './api/calendarMapper.js'
+import { displayEmail, displayName } from './utils/piiMask.js'
 import {
   getDefaultScheduleRange,
   getHomeAgenda,
@@ -146,6 +149,8 @@ function DashboardHeader({
   onNotificationsChange,
   onLogout,
   loggingOut = false,
+  piiRevealed,
+  onTogglePii,
 }) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationBusy, setNotificationBusy] = useState(false)
@@ -192,9 +197,11 @@ function DashboardHeader({
             aria-expanded={profileOpen}
             onClick={() => setProfileOpen((open) => !open)}
           >
-            <span className="account-avatar">{user.name.slice(0, 1)}</span>
+            <span className="account-avatar" aria-hidden="true">
+              {piiRevealed ? user.name.slice(0, 1) : '•'}
+            </span>
             <span className="account-copy">
-              <strong>{user.name}</strong>
+              <strong>{displayName(user.name, piiRevealed)}</strong>
               <small>
                 {getGrade(user)}
                 {user.classNum ? ` ${user.classNum}반` : ''}
@@ -209,10 +216,12 @@ function DashboardHeader({
           {profileOpen && (
             <section className="profile-settings" role="dialog" aria-label="프로필 설정">
               <div className="profile-settings-heading">
-                <span className="account-avatar large">{user.name.slice(0, 1)}</span>
+                <span className="account-avatar large" aria-hidden="true">
+                  {piiRevealed ? user.name.slice(0, 1) : '•'}
+                </span>
                 <div>
-                  <strong>{user.name}</strong>
-                  <small>{user.schoolEmail || user.email}</small>
+                  <strong>{displayName(user.name, piiRevealed)}</strong>
+                  <small>{displayEmail(user.schoolEmail || user.email, piiRevealed)}</small>
                 </div>
               </div>
               <div className="profile-settings-group">
@@ -262,6 +271,16 @@ function DashboardHeader({
             </section>
           )}
         </div>
+        <button
+          className="icon-action pii-toggle"
+          type="button"
+          onClick={onTogglePii}
+          aria-pressed={piiRevealed}
+          aria-label={piiRevealed ? '개인정보 가리기' : '개인정보 표시하기'}
+          title={piiRevealed ? '개인정보 가리기' : '개인정보 표시하기'}
+        >
+          {piiRevealed ? <EyeOff size={17} /> : <Eye size={17} />}
+        </button>
         <button
           className="icon-action"
           type="button"
@@ -332,7 +351,7 @@ function EvidenceList({ sources = [], onSourceSelect, label = '답변 근거' })
   )
 }
 
-function ChatPanel({ user, authToken, onSourceSelect, onAnswerReady }) {
+function ChatPanel({ user, authToken, onSourceSelect, onAnswerReady, piiRevealed }) {
   const [question, setQuestion] = useState('')
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
@@ -383,7 +402,7 @@ function ChatPanel({ user, authToken, onSourceSelect, onAnswerReady }) {
     <section className="chat-panel glass-panel reveal" aria-labelledby="chat-title">
       <div className="chat-heading">
         <span className="feature-icon"><Sparkles size={21} /></span>
-        <div><p>교내 공지 · 학사정보 AI</p><h1 id="chat-title">{user.name}님, 무엇이 궁금한가요?</h1></div>
+        <div><p>교내 공지 · 학사정보 AI</p><h1 id="chat-title">{displayName(user.name, piiRevealed)}님, 무엇이 궁금한가요?</h1></div>
       </div>
 
       {messages.length === 0 ? (
@@ -558,6 +577,7 @@ function DashboardOverview({
   scheduleStatus,
   onNavigate,
   savedCount,
+  piiRevealed,
 }) {
   const overviewAgenda = getHomeAgenda(schedules, 1)
   const nextSchedule = overviewAgenda.today[0] || overviewAgenda.upcoming[0] || null
@@ -567,7 +587,7 @@ function DashboardOverview({
     <section className="overview-panel glass-panel reveal" aria-labelledby="overview-title">
       <div className="overview-heading">
         <span className="feature-icon"><House size={21} /></span>
-        <div><p>오늘의 학사 브리핑</p><h1 id="overview-title">{user.name}님이 먼저 볼 정보예요.</h1></div>
+        <div><p>오늘의 학사 브리핑</p><h1 id="overview-title">{displayName(user.name, piiRevealed)}님이 먼저 볼 정보예요.</h1></div>
       </div>
       {nextSchedule ? (
         <div className="overview-priority">
@@ -1185,6 +1205,7 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const [focusedResource, setFocusedResource] = useState(null)
   const [preferences, setPreferences] = useState(readPreferences)
   const [toast, setToast] = useState(null)
+  const [piiRevealed, setPiiRevealed] = useState(false)
   const activeViewRef = useRef(activeView)
   const preferencesRef = useRef(preferences)
   const academic = useAcademicData({ user, authToken })
@@ -1281,6 +1302,8 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
         onNotificationsChange={handleNotificationsChange}
         onLogout={onLogout}
         loggingOut={loggingOut}
+        piiRevealed={piiRevealed}
+        onTogglePii={() => setPiiRevealed((current) => !current)}
       />
       <AppToast
         notification={toast}
@@ -1300,6 +1323,7 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
                 scheduleStatus={academic.schedules.status}
                 onNavigate={setActiveView}
                 savedCount={savedCount}
+                piiRevealed={piiRevealed}
               />
               <TodayAgendaPanel
                 schedules={academic.schedules.items}
@@ -1314,6 +1338,7 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
               authToken={authToken}
               onSourceSelect={handleSourceSelect}
               onAnswerReady={handleAnswerReady}
+              piiRevealed={piiRevealed}
             />
           </div>
           {activeView === 'timeline' && (
