@@ -85,6 +85,7 @@ function TextField({
   placeholder,
   autoComplete,
   inputMode,
+  maxLength,
   suffix,
   description,
   error,
@@ -111,6 +112,7 @@ function TextField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           inputMode={inputMode}
+          maxLength={maxLength}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
           disabled={disabled}
@@ -418,7 +420,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     const form = event.currentTarget
     const errors = {}
     if (!signup.name.trim()) errors.name = '이름을 입력해 주세요.'
-    if (!/^\d{4,8}$/.test(signup.studentNumber)) errors.studentNumber = '학번은 숫자 4~8자리로 입력해 주세요.'
+    if (!/^\d{4}$/.test(signup.studentNumber)) errors.studentNumber = '학번은 4자리로 구성됩니다.'
     if (!isValidEmailLocal(signup.schoolEmail.trim())) errors.schoolEmail = '학교 이메일 아이디를 확인해 주세요.'
     setFieldErrors(errors)
     if (Object.keys(errors).length) {
@@ -597,7 +599,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
                       <form className="auth-form" onSubmit={continueSignup} noValidate>
                         <TextField label="이름" icon={UserRound} value={signup.name} onChange={(event) => setSignup({ ...signup, name: event.target.value })} placeholder="이름을 입력하세요" autoComplete="name" error={fieldErrors.name} />
                         <div className="auth-field-row">
-                          <TextField label="학번" icon={GraduationCap} value={signup.studentNumber} onChange={(event) => setSignup({ ...signup, studentNumber: event.target.value.replace(/\D/g, '') })} placeholder="예: 2201" inputMode="numeric" error={fieldErrors.studentNumber} />
+                          <TextField label="학번" icon={GraduationCap} value={signup.studentNumber} onChange={(event) => setSignup({ ...signup, studentNumber: event.target.value.replace(/\D/g, '').slice(0, 4) })} placeholder="예: 2201" inputMode="numeric" maxLength={4} error={fieldErrors.studentNumber} />
                           <TextField label="학교 이메일" icon={Mail} value={signup.schoolEmail} onChange={(event) => setSignup({ ...signup, schoolEmail: normalizeEmailLocal(event.target.value) })} placeholder="이메일" autoComplete="email" inputMode="email" suffix={<span className="email-domain">@gsm.hs.kr</span>} description="아이디 부분만 입력하며, 뒤에 @gsm.hs.kr가 자동으로 붙습니다." error={fieldErrors.schoolEmail} />
                         </div>
                         <button className="auth-submit" type="submit">다음 단계<ArrowRight size={18} /></button>

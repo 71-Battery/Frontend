@@ -55,6 +55,7 @@ import {
   readSession as readStoredSession,
   saveSession as saveStoredSession,
 } from './api/sessionStore.js'
+import { AUTH_INVALIDATED_EVENT } from './api/httpClient.js'
 import {
   requestNotificationPermission,
   shouldNotifyForAnswer,
@@ -1366,8 +1367,10 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
 }
 
 function isStoredAuthenticationError(error) {
-  return error?.status === 401 || [
+  return error?.status === 401 || error?.status === 410 || [
+    'ACCOUNT_REMOVED',
     'UNAUTHORIZED',
+    'USER_NOT_FOUND',
     'INVALID_TOKEN',
     'INVALID_AUTH_IDENTITY',
   ].includes(error?.code)
@@ -1390,6 +1393,19 @@ function App({ initialRoute = { kind: 'app' } }) {
   const [sessionStatus, setSessionStatus] = useState(
     initialRoute.kind === 'email-confirmation' ? 'ready' : 'restoring',
   )
+
+  useEffect(() => {
+    const invalidateSession = () => {
+      clearStoredSession()
+      setSession(null)
+      setSessionStatus('ready')
+    }
+    window.addEventListener(AUTH_INVALIDATED_EVENT, invalidateSession)
+    return () => window.removeEventListener(
+      AUTH_INVALIDATED_EVENT,
+      invalidateSession,
+    )
+  }, [])
 
   useEffect(() => {
     if (initialRoute.kind !== 'email-confirmation') return undefined

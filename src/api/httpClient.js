@@ -16,6 +16,9 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 const SAFE_ERROR_MESSAGES = {
   INVALID_CREDENTIALS: '이메일과 비밀번호를 확인해 주세요.',
   EMAIL_NOT_VERIFIED: '학교 이메일 인증을 완료한 뒤 다시 로그인해 주세요.',
+  ACCOUNT_ALREADY_EXISTS: '이미 가입된 계정입니다. 로그인해 주세요.',
+  ACCOUNT_REMOVED: '삭제된 계정입니다. 다시 회원가입해 주세요.',
+  SIGNUP_FAILED: '회원가입을 완료하지 못했습니다. 인증 사용자와 입력 정보를 확인해 주세요.',
   VERIFICATION_EMAIL_RATE_LIMITED: '인증 메일 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.',
   VERIFICATION_RESEND_TOO_SOON: '잠시 후 인증 메일을 다시 요청해 주세요.',
   VERIFICATION_NOT_PENDING: '인증 대기 중인 계정을 확인할 수 없습니다.',
@@ -30,7 +33,7 @@ const SAFE_ERROR_MESSAGES = {
   DATA_PROVIDER_TIMEOUT: '학사 정보 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.',
   DATA_PROVIDER_UNAVAILABLE: '학사 정보 제공자가 일시적으로 응답하지 않습니다.',
   DATA_PROVIDER_INVALID_RESPONSE: '학사 정보 형식을 확인할 수 없습니다.',
-  STUDENT_IDENTITY_MISMATCH: '학교 이메일과 학번이 재학생 정보와 일치하지 않습니다.',
+  STUDENT_IDENTITY_MISMATCH: '이름, 학번 또는 학교 이메일이 재학생 정보와 일치하지 않습니다.',
   STUDENT_PROFILE_NOT_FOUND: '연결된 학생 프로필을 찾을 수 없습니다. 학교 이메일과 정보 제공 동의를 확인해 주세요.',
   INVALID_REQUEST: '질문을 입력해 주세요.',
   QUERY_TOO_LONG: '질문은 1,000자 이하로 입력해 주세요.',
@@ -47,7 +50,7 @@ const SAFE_FIELD_ERROR_MESSAGES = {
   identifier: '학번 또는 학교 이메일 형식을 확인해 주세요.',
   password: '비밀번호 형식을 확인해 주세요.',
   name: '이름을 확인해 주세요.',
-  studentNumber: '학번 형식을 확인해 주세요.',
+  studentNumber: '학번은 4자리로 구성됩니다.',
   schoolEmail: '학교 이메일 형식을 확인해 주세요.',
   passwordConfirm: '비밀번호 확인 값을 확인해 주세요.',
   agreements: '필수 약관 동의를 확인해 주세요.',
@@ -70,6 +73,16 @@ export class ApiError extends Error {
     this.fieldErrors = fieldErrors
     this.requestId = requestId
   }
+}
+
+export const AUTH_INVALIDATED_EVENT = 'gsm-compass:auth-invalidated'
+
+export function shouldInvalidateAuthenticatedSession({ authToken, status, code }) {
+  return Boolean(authToken) && (
+    status === 401 ||
+    status === 410 ||
+    ['ACCOUNT_REMOVED', 'USER_NOT_FOUND', 'INVALID_AUTH_IDENTITY', 'INVALID_TOKEN'].includes(code)
+  )
 }
 
 function buildUrl(path, query) {
@@ -181,9 +194,19 @@ export async function apiRequest(path, {
   const payloadStatus = String(payload?.status || '').toLowerCase()
   if (!response.ok || payloadStatus === 'error') {
     const errorData = payload?.error || {}
+    const errorCode = errorData.code || (payloadStatus === 'error' ? 'BACKEND_ERROR' : `HTTP_${response.status}`)
+    if (shouldInvalidateAuthenticatedSession({
+      authToken,
+      status: response.status,
+      code: errorCode,
+    })) {
+      window.dispatchEvent(new CustomEvent(AUTH_INVALIDATED_EVENT, {
+        detail: { code: errorCode },
+      }))
+    }
     throw new ApiError(getSafeMessage(response.status, payload), {
       status: response.status,
-      code: errorData.code || (payloadStatus === 'error' ? 'BACKEND_ERROR' : `HTTP_${response.status}`),
+      code: errorCode,
       fieldErrors: getSafeFieldErrors(response.status, errorData),
       requestId: errorData.requestId || errorData.request_id || response.headers.get('x-request-id'),
     })
