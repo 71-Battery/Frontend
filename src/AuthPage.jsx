@@ -1,4 +1,12 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import gsap from 'gsap'
 import {
   ArrowLeft,
@@ -24,12 +32,12 @@ import {
   signup as signupWithBackend,
 } from './api/authApi.js'
 import { createDemoSession } from './api/mockAuthApi.js'
-import FloatingObjects from './components/FloatingObjects.jsx'
 import { getLegalDocument } from './legalDocuments.js'
 import { displayEmail } from './utils/piiMask.js'
 import './AuthPage.css'
 
 const initialLogin = { email: '', password: '' }
+const FloatingObjects = lazy(() => import('./components/FloatingObjects.jsx'))
 const SCHOOL_EMAIL_DOMAIN = '@gsm.hs.kr'
 const EMAIL_LOCAL_PATTERN = /^[A-Za-z0-9._%+-]+$/
 const initialSignup = {
@@ -546,7 +554,9 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     <div className="auth-page">
       <div className="auth-orb auth-orb-one" aria-hidden="true" />
       <div className="auth-orb auth-orb-two" aria-hidden="true" />
-      <FloatingObjects variant="auth" />
+      <Suspense fallback={null}>
+        <FloatingObjects variant="auth" />
+      </Suspense>
 
       <main className="auth-layout">
         <section className="auth-form-area" aria-labelledby="auth-title">

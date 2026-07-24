@@ -39,7 +39,6 @@ import {
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
 import EmailConfirmationPage from './EmailConfirmationPage.jsx'
-import FloatingObjects from './components/FloatingObjects.jsx'
 import {
   logout as logoutWithBackend,
   verifyEmailConfirmation,
@@ -81,6 +80,8 @@ import {
 import { useAcademicData } from './hooks/useAcademicData.js'
 import './App.css'
 
+const FloatingObjects = lazy(() => import('./components/FloatingObjects.jsx'))
+
 const MarkdownMessage = lazy(() => import('./components/MarkdownMessage.jsx'))
 
 const departmentLabels = {
@@ -98,7 +99,7 @@ const suggestions = [
 const navItems = [
   { id: 'home', label: '홈', icon: House },
   { id: 'chat', label: 'AI 질문', icon: MessageCircleQuestion },
-  { id: 'timeline', label: '학사 타임라인', icon: CalendarDays },
+  { id: 'timeline', label: '학사 일정', icon: CalendarDays },
   { id: 'notices', label: '공지·규정', icon: Megaphone },
   { id: 'saved', label: '저장한 정보', icon: Bookmark },
 ]
@@ -470,7 +471,7 @@ function TodayAgendaPanel({ schedules, scheduleStatus, onNavigate }) {
     <aside className="agenda-panel glass-panel reveal" aria-labelledby="agenda-title">
       <div className="panel-heading">
         <div><p>TODAY &amp; NEXT</p><h2 id="agenda-title">오늘 확인할 내용</h2></div>
-        <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 타임라인 전체 보기"><ArrowRight size={17} /></button>
+        <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 일정 전체 보기"><ArrowRight size={17} /></button>
       </div>
       <div className="home-agenda">
         {scheduleStatus === 'loading' ? (
@@ -574,16 +575,16 @@ function DashboardOverview({
         <div className="overview-priority">
           <span className="priority-date"><strong>{nextSchedule.date}</strong><small>{nextSchedule.month}</small></span>
           <div><span>{nextSchedule.category} · {nextSchedule.dday}</span><strong>{nextSchedule.title}</strong><p>{nextSchedule.description}</p></div>
-          <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 타임라인에서 확인"><ArrowRight size={18} /></button>
+          <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 일정에서 확인"><ArrowRight size={18} /></button>
         </div>
       ) : (
         <div className="overview-priority overview-placeholder">
           {scheduleStatus === 'loading' ? <LoaderCircle className="spin" size={22} /> : <CalendarDays size={22} />}
           <div>
             <strong>{scheduleStatus === 'loading' ? '다가오는 일정을 확인하고 있어요.' : '표시할 일정이 없어요.'}</strong>
-            <p>학사 타임라인에서 조회 상태를 확인할 수 있어요.</p>
+            <p>학사 일정에서 조회 상태를 확인할 수 있어요.</p>
           </div>
-          <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 타임라인에서 확인"><ArrowRight size={18} /></button>
+          <button type="button" onClick={() => onNavigate('timeline')} aria-label="학사 일정에서 확인"><ArrowRight size={18} /></button>
         </div>
       )}
       <div className="overview-links">
@@ -739,7 +740,7 @@ function TimelineView({
     <div className="content-view">
       <ViewHeading
         eyebrow="ACADEMIC TIMELINE"
-        title="학사 타임라인"
+        title="학사 일정"
         description={`오늘부터 ${SCHEDULE_WINDOW_DAYS}일 동안의 학사 일정을 날짜순으로 확인합니다.`}
         meta={meta}
         demo={isDemo}
@@ -1273,7 +1274,9 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   return (
     <div className="dashboard-shell" data-theme={preferences.theme}>
       <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
-      <FloatingObjects />
+      <Suspense fallback={null}>
+        <FloatingObjects />
+      </Suspense>
       <a className="skip-link" href="#main-content">본문으로 바로가기</a>
       <DashboardHeader
         user={user}
