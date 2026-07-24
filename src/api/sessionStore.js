@@ -52,6 +52,8 @@ function normalizeSession(session) {
     token,
     permissions: {
       canManageContent: session.permissions?.canManageContent === true,
+      canManageUsers: session.permissions?.canManageUsers === true,
+      canAssignRoles: session.permissions?.canAssignRoles === true,
     },
     meta: normalizeMeta(session.meta),
   }
@@ -115,4 +117,3 @@ export function clearSession(storage) {
     // Logging out must still succeed when browser storage is unavailable.
   }
 }
-

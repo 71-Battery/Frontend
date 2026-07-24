@@ -28,7 +28,11 @@ function authenticatedSession() {
       password: 'must-not-be-stored',
     },
     token: 'access-token',
-    permissions: { canManageContent: false },
+    permissions: {
+      canManageContent: true,
+      canManageUsers: true,
+      canAssignRoles: true,
+    },
     meta: { source: 'DATA_GSM', fallback: false },
   }
 }
@@ -43,6 +47,11 @@ test('stores and restores only the normalized browser session', () => {
   assert.equal(restored.token, 'access-token')
   assert.equal(restored.user.name, '홍길동')
   assert.equal(restored.user.password, undefined)
+  assert.deepEqual(restored.permissions, {
+    canManageContent: true,
+    canManageUsers: true,
+    canAssignRoles: true,
+  })
   assert.equal(raw.includes('must-not-be-stored'), false)
 });
 
@@ -66,4 +75,3 @@ test('clears a persisted session during logout', () => {
 
   assert.equal(readSession(storage), null)
 });
-

@@ -50,6 +50,8 @@ function normalizeAuthPayload(payload) {
       token: getAccessToken(data),
       permissions: {
         canManageContent: data?.permissions?.canManageContent === true,
+        canManageUsers: data?.permissions?.canManageUsers === true,
+        canAssignRoles: data?.permissions?.canAssignRoles === true,
       },
       verificationRequired: data.verificationRequired === true,
       verificationExpiresAt: data.verificationExpiresAt || null,

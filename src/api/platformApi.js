@@ -14,6 +14,8 @@ export const PLATFORM_ENDPOINTS = Object.freeze({
   supabaseHealth: '/supabase-health',
   chat: '/api/v1/chat',
   adminRules: '/api/admin/rules',
+  adminNotices: '/api/admin/notices',
+  adminUsers: '/api/admin/users',
   profile: '/api/profile',
   schedules: '/api/schedules',
   notices: '/api/notices',
@@ -42,6 +44,8 @@ function normalizePermissions(value) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
   return {
     canManageContent: source.canManageContent === true,
+    canManageUsers: source.canManageUsers === true,
+    canAssignRoles: source.canAssignRoles === true,
   }
 }
 
@@ -168,4 +172,86 @@ export async function createAdminRule(rule, { authToken, signal } = {}) {
   })
   const data = unwrapData(payload) || {}
   return data.rule || data
+}
+
+export async function updateAdminRule(ruleId, rule, { authToken, signal } = {}) {
+  const payload = await apiRequest(
+    `${PLATFORM_ENDPOINTS.adminRules}/${encodeURIComponent(ruleId)}`,
+    {
+      method: 'PATCH',
+      body: {
+        title: asText(rule.title),
+        content: asText(rule.content),
+        category: asText(rule.category, '일반'),
+      },
+      authToken,
+      signal,
+    },
+  )
+  const data = unwrapData(payload) || {}
+  return data.rule || data
+}
+
+export async function deleteAdminRule(ruleId, { authToken, signal } = {}) {
+  await apiRequest(
+    `${PLATFORM_ENDPOINTS.adminRules}/${encodeURIComponent(ruleId)}`,
+    {
+      method: 'DELETE',
+      authToken,
+      signal,
+    },
+  )
+}
+
+export async function createAdminNotice(notice, { authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.adminNotices, {
+    method: 'POST',
+    body: {
+      title: asText(notice.title),
+      summary: asText(notice.summary),
+      content: asText(notice.content),
+      category: asText(notice.category, '일반'),
+    },
+    authToken,
+    signal,
+  })
+  const data = unwrapData(payload) || {}
+  return data.notice || data
+}
+
+export async function getAdminUsers({
+  page = 1,
+  perPage = 20,
+  authToken,
+  signal,
+} = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.adminUsers, {
+    query: { page, perPage },
+    authToken,
+    signal,
+  })
+  const data = unwrapData(payload) || {}
+  return {
+    users: Array.isArray(data.users) ? data.users : [],
+    pagination: data.pagination && typeof data.pagination === 'object'
+      ? data.pagination
+      : { page, perPage, total: 0 },
+  }
+}
+
+export async function updateAdminUserRole(
+  userId,
+  appRole,
+  { authToken, signal } = {},
+) {
+  const payload = await apiRequest(
+    `${PLATFORM_ENDPOINTS.adminUsers}/${encodeURIComponent(userId)}/role`,
+    {
+      method: 'PATCH',
+      body: { appRole },
+      authToken,
+      signal,
+    },
+  )
+  return unwrapData(payload)
 }

@@ -28,7 +28,6 @@ import {
   Megaphone,
   MessageCircleQuestion,
   Moon,
-  Plus,
   RefreshCw,
   Search,
   Send,
@@ -39,14 +38,14 @@ import {
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
 import EmailConfirmationPage from './EmailConfirmationPage.jsx'
+import AdminContentPanel from './components/AdminContentPanel.jsx'
+import AdminUsersView from './components/AdminUsersView.jsx'
 import {
   logout as logoutWithBackend,
   verifyEmailConfirmation,
 } from './api/authApi.js'
 import { mockLogout } from './api/mockAuthApi.js'
 import {
-  createAdminRule,
-  getAdminRules,
   getProfile,
   sendChat,
 } from './api/platformApi.js'
@@ -1108,62 +1107,18 @@ function SavedView({
   )
 }
 
-function AdminRules({ authToken }) {
-  const [open, setOpen] = useState(false)
-  const [rules, setRules] = useState([])
-  const [form, setForm] = useState({ title: '', content: '', category: 'GENERAL' })
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!open) return undefined
-    const controller = new AbortController()
-    getAdminRules({ authToken, signal: controller.signal }).then(setRules).catch((requestError) => {
-      if (requestError.name !== 'AbortError') setError(requestError.message)
-    })
-    return () => controller.abort()
-  }, [authToken, open])
-
-  async function submit(event) {
-    event.preventDefault()
-    if (!form.title.trim() || !form.content.trim() || busy) return
-    setBusy(true)
-    setError('')
-    try {
-      const created = await createAdminRule(form, { authToken })
-      setRules((current) => [created, ...current])
-      setForm({ title: '', content: '', category: 'GENERAL' })
-    } catch (requestError) {
-      setError(requestError.message || '규칙을 저장하지 못했습니다.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <section className="admin-panel glass-panel">
-      <button className="admin-toggle" type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}>관리자 규칙 <ChevronDown size={17} /></button>
-      {open && (
-        <div className="admin-content">
-          <form onSubmit={submit}>
-            <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="규칙 제목" aria-label="규칙 제목" />
-            <textarea value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="규칙 내용" aria-label="규칙 내용" />
-            <button type="submit" disabled={busy || !form.title.trim() || !form.content.trim()}><Plus size={16} />규칙 추가</button>
-          </form>
-          {error && <p className="inline-error" role="alert">{error}</p>}
-          <div className="rule-list">
-            {rules.map((rule) => <article key={rule.id || `${rule.title}-${rule.category}`}><span>{rule.category || 'GENERAL'}</span><strong>{rule.title}</strong><p>{rule.content}</p></article>)}
-          </div>
-        </div>
-      )}
-    </section>
-  )
-}
-
-function PrimaryNavigation({ activeView, onChange, savedCount }) {
+function PrimaryNavigation({
+  activeView,
+  onChange,
+  savedCount,
+  canManageUsers = false,
+}) {
+  const availableItems = canManageUsers
+    ? [...navItems, { id: 'admin-users', label: '회원 관리', icon: ShieldCheck }]
+    : navItems
   return (
     <nav className="primary-tabs" aria-label="주요 메뉴">
-      {navItems.map(({ id, label, icon: Icon }) => (
+      {availableItems.map(({ id, label, icon: Icon }) => (
         <button
           key={id}
           type="button"
@@ -1192,7 +1147,8 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const contentItems = [...academic.notices.items, ...academic.regulations.items].sort((left, right) => (
     String(right.publishedAt || right.effectiveFrom).localeCompare(String(left.publishedAt || left.effectiveFrom))
   ))
-  const isAdmin = permissions.canManageContent
+  const canManageContent = permissions.canManageContent
+  const canManageUsers = permissions.canManageUsers
   const isDemo = user.dataSource === 'demo'
   const viewRef = useRef(null)
   const savedCount = academic.savedKeys.size
@@ -1291,7 +1247,12 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
         onClose={() => setToast(null)}
       />
       <main className="dashboard-main" id="main-content">
-        <PrimaryNavigation activeView={activeView} onChange={setActiveView} savedCount={savedCount} />
+        <PrimaryNavigation
+          activeView={activeView}
+          onChange={setActiveView}
+          savedCount={savedCount}
+          canManageUsers={canManageUsers}
+        />
         {academic.saveError && <div className="global-data-error" role="alert"><CircleAlert size={16} />{academic.saveError}</div>}
         <div className="active-view" ref={viewRef}>
           {activeView === 'home' && (
@@ -1348,7 +1309,12 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
                 toggleSaved={academic.toggleSaved}
                 selectedResourceId={focusedResource?.type !== RESOURCE_TYPES.SCHEDULE ? focusedResource?.id : null}
               />
-              {isAdmin && <AdminRules authToken={authToken} />}
+              {canManageContent && (
+                <AdminContentPanel
+                  authToken={authToken}
+                  onContentChanged={academic.retry}
+                />
+              )}
             </>
           )}
           {activeView === 'saved' && (
@@ -1361,6 +1327,13 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
               toggleSaved={academic.toggleSaved}
               retry={academic.retry}
               isDemo={isDemo}
+            />
+          )}
+          {activeView === 'admin-users' && canManageUsers && (
+            <AdminUsersView
+              authToken={authToken}
+              currentEmail={user.schoolEmail || user.email}
+              canAssignRoles={permissions.canAssignRoles}
             />
           )}
         </div>
@@ -1486,6 +1459,8 @@ function App({ initialRoute = { kind: 'app' } }) {
       token: authenticated.token || '',
       permissions: {
         canManageContent: authenticated.permissions?.canManageContent === true,
+        canManageUsers: authenticated.permissions?.canManageUsers === true,
+        canAssignRoles: authenticated.permissions?.canAssignRoles === true,
       },
       meta: authenticated.meta || {},
     }

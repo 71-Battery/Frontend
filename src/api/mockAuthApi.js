@@ -33,6 +33,8 @@ export function createDemoSession() {
     token: '',
     permissions: {
       canManageContent: false,
+      canManageUsers: false,
+      canAssignRoles: false,
     },
     meta: {
       source: 'DEMO',
