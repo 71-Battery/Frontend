@@ -134,3 +134,36 @@
     transform: none;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .email-confirmation-card {
+    background:
+      linear-gradient(145deg, rgba(38, 48, 67, 0.78), rgba(20, 28, 42, 0.62) 55%, rgba(30, 40, 57, 0.7));
+    border-color: rgba(220, 229, 245, 0.13);
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  }
+
+  .email-confirmation-brand,
+  .email-confirmation-copy h1 {
+    color: #eef3fb;
+  }
+
+  .email-confirmation-copy p {
+    color: #a8b3c5;
+  }
+
+  .email-confirmation-icon {
+    color: #aeb9df;
+    background: rgba(113, 130, 226, 0.13);
+    border-color: rgba(142, 157, 239, 0.11);
+  }
+
+  .email-confirmation-icon.complete {
+    color: #8fd8c1;
+    background: rgba(42, 146, 117, 0.16);
+    border-color: rgba(107, 210, 178, 0.13);
+  }
+}

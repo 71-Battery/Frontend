@@ -12,14 +12,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.6.1",
     "gsap": "^3.15.0",
     "lucide-react": "^1.25.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "three": "^0.185.1"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.46.0",

@@ -1,9 +1,6 @@
-import { lazy, Suspense } from 'react'
 import { ArrowRight, CheckCircle2, GraduationCap, LoaderCircle } from 'lucide-react'
 import './AuthPage.css'
 import './EmailConfirmationPage.css'
-
-const FloatingObjects = lazy(() => import('./components/FloatingObjects.jsx'))
 
 export default function EmailConfirmationPage({ status = 'checking' }) {
   const complete = status === 'complete'
@@ -12,9 +9,6 @@ export default function EmailConfirmationPage({ status = 'checking' }) {
     <div className="auth-page email-confirmation-page">
       <div className="auth-orb auth-orb-one" aria-hidden="true" />
       <div className="auth-orb auth-orb-two" aria-hidden="true" />
-      <Suspense fallback={null}>
-        <FloatingObjects variant="auth" />
-      </Suspense>
 
       <main className="email-confirmation-layout">
         <section

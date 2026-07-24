@@ -80,8 +80,6 @@ import {
 import { useAcademicData } from './hooks/useAcademicData.js'
 import './App.css'
 
-const FloatingObjects = lazy(() => import('./components/FloatingObjects.jsx'))
-
 const MarkdownMessage = lazy(() => import('./components/MarkdownMessage.jsx'))
 
 const departmentLabels = {
@@ -1274,9 +1272,6 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   return (
     <div className="dashboard-shell" data-theme={preferences.theme}>
       <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
-      <Suspense fallback={null}>
-        <FloatingObjects />
-      </Suspense>
       <a className="skip-link" href="#main-content">본문으로 바로가기</a>
       <DashboardHeader
         user={user}

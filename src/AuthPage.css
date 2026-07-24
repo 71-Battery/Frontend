@@ -1117,3 +1117,229 @@
     transform: none;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .auth-page {
+    color: #edf2f8;
+    color-scheme: dark;
+    background:
+      linear-gradient(rgba(214, 224, 242, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(214, 224, 242, 0.025) 1px, transparent 1px),
+      #0d1320;
+  }
+
+  .auth-orb-one {
+    background: rgba(115, 132, 224, 0.13);
+  }
+
+  .auth-orb-two {
+    background: rgba(54, 160, 135, 0.09);
+  }
+
+  .auth-form-card {
+    background:
+      linear-gradient(145deg, rgba(38, 48, 67, 0.78), rgba(20, 28, 42, 0.62) 55%, rgba(30, 40, 57, 0.7));
+    border-color: rgba(220, 229, 245, 0.13);
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  }
+
+  .auth-tabs {
+    background: rgba(14, 21, 33, 0.5);
+    border-color: rgba(220, 229, 245, 0.08);
+  }
+
+  .auth-tabs button {
+    color: #97a3b6;
+  }
+
+  .auth-tabs button:hover:not(:disabled) {
+    color: #bbc5ff;
+  }
+
+  .auth-tabs button.active {
+    color: #eef3fb;
+    background: rgba(60, 73, 96, 0.66);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.22);
+  }
+
+  .auth-title-block h1,
+  .auth-label,
+  .auth-checkbox b,
+  .verification-email,
+  .legal-modal,
+  .legal-modal-header h2,
+  .legal-clause h3 {
+    color: #eef3fb;
+  }
+
+  .auth-title-block > p,
+  .auth-checkbox,
+  .email-domain,
+  .verification-retention,
+  .legal-modal-header small,
+  .legal-modal-header p,
+  .legal-clause li,
+  .legal-modal-footer p {
+    color: #a8b3c5;
+  }
+
+  .signup-progress span {
+    color: #8793a7;
+    background: rgba(70, 82, 103, 0.7);
+  }
+
+  .signup-progress span.active {
+    color: #fff;
+    background: #7182e2;
+  }
+
+  .signup-progress i,
+  .auth-divider::after {
+    background: rgba(220, 229, 245, 0.12);
+  }
+
+  .auth-input-wrap {
+    background: rgba(12, 19, 31, 0.68);
+    border-color: rgba(220, 229, 245, 0.12);
+  }
+
+  .auth-input-wrap:has(input:disabled) {
+    background: rgba(24, 32, 47, 0.78);
+  }
+
+  .auth-input-wrap > svg,
+  .password-toggle,
+  .verification-email-toggle {
+    color: #8d99ac;
+  }
+
+  .auth-input-wrap input {
+    color: #eef3fb;
+  }
+
+  .auth-input-wrap input::placeholder {
+    color: #738095;
+  }
+
+  .auth-input-wrap input:-webkit-autofill,
+  .auth-input-wrap input:-webkit-autofill:hover,
+  .auth-input-wrap input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #eef3fb;
+    box-shadow: 0 0 0 1000px #111a29 inset;
+  }
+
+  .password-toggle:hover:not(:disabled),
+  .verification-email-toggle:hover {
+    color: #b9c3ff;
+    background: rgba(113, 130, 226, 0.13);
+  }
+
+  .auth-checkbox > span {
+    background: rgba(13, 20, 32, 0.76);
+    border-color: rgba(220, 229, 245, 0.18);
+  }
+
+  .auth-error {
+    color: #ff9cad;
+    background: rgba(164, 53, 72, 0.17);
+    border-color: rgba(255, 127, 148, 0.16);
+  }
+
+  .auth-notice {
+    color: #8fd8c1;
+    background: rgba(42, 146, 117, 0.16);
+    border-color: rgba(107, 210, 178, 0.13);
+  }
+
+  .demo-login,
+  .resend-verification-button {
+    color: #bbc5ff;
+    background: rgba(113, 130, 226, 0.13);
+    border-color: rgba(142, 157, 239, 0.12);
+  }
+
+  .demo-login:hover:not(:disabled),
+  .resend-verification-button:hover:not(:disabled) {
+    color: #d5dcff;
+    background: rgba(113, 130, 226, 0.22);
+  }
+
+  .agreement-list {
+    background: rgba(12, 19, 31, 0.46);
+    border-color: rgba(220, 229, 245, 0.08);
+  }
+
+  .agreement-row p > button {
+    color: #b0bbce;
+  }
+
+  .agreement-row p > button:hover {
+    color: #cbd3ff;
+    background: rgba(113, 130, 226, 0.11);
+  }
+
+  .legal-modal {
+    background: #151e2d;
+    border-color: rgba(220, 229, 245, 0.12);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48);
+  }
+
+  .legal-modal-header > span,
+  .verification-mail-icon {
+    color: #aeb9ff;
+    background: rgba(113, 130, 226, 0.14);
+    border-color: rgba(142, 157, 239, 0.12);
+  }
+
+  .legal-modal-header > button {
+    color: #a8b3c5;
+    background: rgba(220, 229, 245, 0.07);
+  }
+
+  .legal-modal-header > button:hover {
+    color: #eef3fb;
+    background: rgba(220, 229, 245, 0.12);
+  }
+
+  .legal-modal-footer {
+    background: rgba(12, 19, 31, 0.54);
+    border-color: rgba(220, 229, 245, 0.08);
+  }
+
+  .legal-draft-notice {
+    color: #efbd73;
+    background: rgba(159, 103, 33, 0.17);
+    border-color: rgba(235, 177, 88, 0.14);
+  }
+
+  .back-button {
+    color: #b0bbce;
+    background: rgba(220, 229, 245, 0.07);
+    border-color: rgba(220, 229, 245, 0.12);
+  }
+
+  .back-button:hover:not(:disabled) {
+    color: #eef3fb;
+    background: rgba(220, 229, 245, 0.12);
+  }
+
+  .verification-timer {
+    color: #b9c3ff;
+    background: rgba(113, 130, 226, 0.12);
+    border-color: rgba(142, 157, 239, 0.1);
+  }
+
+  .verification-timer span,
+  .verification-timer small {
+    color: #9ba7ba;
+  }
+
+  .verification-timer.is-expired {
+    color: #ff9cad;
+    background: rgba(164, 53, 72, 0.17);
+    border-color: rgba(255, 127, 148, 0.14);
+  }
+}

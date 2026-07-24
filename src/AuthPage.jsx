@@ -1,6 +1,4 @@
 import {
-  lazy,
-  Suspense,
   useEffect,
   useId,
   useLayoutEffect,
@@ -37,7 +35,6 @@ import { displayEmail } from './utils/piiMask.js'
 import './AuthPage.css'
 
 const initialLogin = { email: '', password: '' }
-const FloatingObjects = lazy(() => import('./components/FloatingObjects.jsx'))
 const SCHOOL_EMAIL_DOMAIN = '@gsm.hs.kr'
 const EMAIL_LOCAL_PATTERN = /^[A-Za-z0-9._%+-]+$/
 const initialSignup = {
@@ -554,9 +551,6 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     <div className="auth-page">
       <div className="auth-orb auth-orb-one" aria-hidden="true" />
       <div className="auth-orb auth-orb-two" aria-hidden="true" />
-      <Suspense fallback={null}>
-        <FloatingObjects variant="auth" />
-      </Suspense>
 
       <main className="auth-layout">
         <section className="auth-form-area" aria-labelledby="auth-title">
