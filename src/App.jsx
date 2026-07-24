@@ -101,7 +101,7 @@ const navItems = [
   { id: 'chat', label: 'AI 질문', icon: MessageCircleQuestion },
   { id: 'timeline', label: '학사 일정', icon: CalendarDays },
   { id: 'notices', label: '공지·규정', icon: Megaphone },
-  { id: 'saved', label: '저장한 정보', icon: Bookmark },
+  { id: 'saved', label: '즐겨찾기', icon: Bookmark },
 ]
 
 
@@ -603,7 +603,7 @@ function DashboardOverview({
         </button>
         <button type="button" onClick={() => onNavigate('saved')}>
           <span><BookmarkCheck size={18} /></span>
-          <div><strong>저장한 정보 {savedCount}개</strong><small>다시 볼 일정과 공지를 확인하세요.</small></div>
+          <div><strong>즐겨찾기 {savedCount}개</strong><small>다시 볼 일정과 공지를 확인하세요.</small></div>
           <ArrowRight size={16} />
         </button>
       </div>
@@ -1062,7 +1062,7 @@ function SavedView({
     <div className="content-view">
       <ViewHeading
         eyebrow="MY LIBRARY"
-        title="저장한 정보"
+        title="즐겨찾기"
         description="다시 확인할 일정과 공지를 한곳에 모았습니다."
         meta={savedState.meta}
         demo={isDemo}
@@ -1100,7 +1100,7 @@ function SavedView({
             status={savedState.status}
             error={savedState.error}
             onRetry={retry}
-            emptyTitle="저장한 정보가 아직 없어요."
+            emptyTitle="즐겨찾기가 아직 없어요."
             emptyDescription="일정이나 공지의 저장 버튼을 눌러 모아보세요."
           />
         )}

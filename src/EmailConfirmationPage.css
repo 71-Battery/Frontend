@@ -17,14 +17,16 @@
   align-items: center;
   flex-direction: column;
   text-align: center;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.96);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.34) 55%, rgba(230, 237, 248, 0.38));
+  border: 1px solid rgba(255, 255, 255, 0.74);
   border-radius: 28px;
   box-shadow:
-    0 30px 76px rgba(32, 43, 72, 0.14),
-    inset 0 0 0 1px rgba(33, 46, 75, 0.05),
-    inset 0 1px 0 #fff;
-  backdrop-filter: blur(26px) saturate(125%);
+    0 30px 76px rgba(32, 43, 72, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -1px 0 rgba(97, 117, 149, 0.08);
+  -webkit-backdrop-filter: blur(34px) saturate(150%);
+  backdrop-filter: blur(34px) saturate(150%);
 }
 
 .email-confirmation-brand {

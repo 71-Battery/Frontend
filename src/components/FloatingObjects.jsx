@@ -13,21 +13,21 @@ const objects = [
     spin: [0.16, 0.24, 0.1],
     scale: 0.82,
     phase: 0.3,
-    color: '#7186f4',
-    emissive: '#263779',
+    color: '#afbdd2',
+    emissive: '#56657d',
     mobile: true,
   },
   {
     id: 'mint-sphere',
-    geometry: 'icosahedron',
+    geometry: 'pebble',
     position: [5.1, -2.8, -1.8],
     velocity: [-0.19, -0.18, 0.16],
     rotation: [0.2, -0.35, 0.1],
     spin: [-0.12, 0.2, -0.08],
-    scale: 0.62,
+    scale: [0.68, 0.82, 0.62],
     phase: 1.6,
-    color: '#57d8b7',
-    emissive: '#174f45',
+    color: '#b8cdc4',
+    emissive: '#5d716a',
     mobile: true,
   },
   {
@@ -39,34 +39,34 @@ const objects = [
     spin: [0.1, 0.2, 0.32],
     scale: 0.88,
     phase: 2.7,
-    color: '#8295f6',
-    emissive: '#2b397c',
+    color: '#bbb9cf',
+    emissive: '#69677d',
     mobile: true,
   },
   {
-    id: 'blue-crystal',
-    geometry: 'octahedron',
+    id: 'ice-capsule',
+    geometry: 'capsule',
     position: [-5, -2.7, -2.6],
     velocity: [0.17, -0.21, 0.18],
     rotation: [-0.3, 0.3, -0.2],
     spin: [0.22, 0.3, 0.14],
-    scale: 0.78,
+    scale: 0.72,
     phase: 4,
-    color: '#6379df',
-    emissive: '#202f73',
+    color: '#b9cad2',
+    emissive: '#60737a',
     mobile: false,
   },
   {
-    id: 'mint-cube',
-    geometry: 'box',
+    id: 'pearl-knot',
+    geometry: 'knot',
     position: [3.65, -0.25, 2.35],
     velocity: [0.14, 0.2, -0.2],
     rotation: [-0.4, 0.55, 0.12],
     spin: [0.28, 0.36, 0.18],
-    scale: 0.72,
+    scale: 0.76,
     phase: 5.2,
-    color: '#68d6bb',
-    emissive: '#184e44',
+    color: '#d0c4bf',
+    emissive: '#766965',
     mobile: false,
   },
 ]
@@ -88,11 +88,12 @@ function useReducedMotion() {
 }
 
 function Geometry({ type }) {
-  if (type === 'sphere') return <sphereGeometry args={[1, 48, 48]} />
-  if (type === 'icosahedron') return <icosahedronGeometry args={[1, 1]} />
-  if (type === 'torus') return <torusGeometry args={[1, 0.3, 28, 88]} />
-  if (type === 'octahedron') return <octahedronGeometry args={[1, 0]} />
-  return <boxGeometry args={[1.55, 1.55, 1.55, 2, 2, 2]} />
+  if (type === 'sphere' || type === 'pebble') {
+    return <sphereGeometry args={[1, 56, 56]} />
+  }
+  if (type === 'torus') return <torusGeometry args={[1, 0.28, 36, 112]} />
+  if (type === 'capsule') return <capsuleGeometry args={[0.58, 0.9, 16, 36]} />
+  return <torusKnotGeometry args={[0.66, 0.18, 112, 24, 2, 3]} />
 }
 
 function FloatingMesh({ object, pointerRef, reducedMotion }) {
@@ -198,14 +199,15 @@ function FloatingMesh({ object, pointerRef, reducedMotion }) {
       <meshPhysicalMaterial
         color={object.color}
         emissive={object.emissive}
-        emissiveIntensity={0.16}
-        metalness={0.2}
-        roughness={0.18}
-        clearcoat={1}
-        clearcoatRoughness={0.13}
-        reflectivity={0.92}
+        emissiveIntensity={0.06}
+        metalness={0.04}
+        roughness={0.3}
+        clearcoat={0.72}
+        clearcoatRoughness={0.28}
+        reflectivity={0.62}
+        ior={1.32}
         transparent
-        opacity={0.88}
+        opacity={0.68}
       />
     </mesh>
   )
@@ -237,11 +239,11 @@ function FloatingScene({ pointerRef, reducedMotion }) {
 
   return (
     <>
-      <ambientLight intensity={1.5} />
-      <hemisphereLight args={['#f7f9ff', '#26376e', 1.55]} />
-      <directionalLight position={[-4, 7, 8]} color="#ffffff" intensity={3.1} />
-      <pointLight position={[5, -2, 5]} color="#7fe5ca" intensity={22} distance={16} />
-      <pointLight position={[-5, 1, 3]} color="#8798ff" intensity={18} distance={15} />
+      <ambientLight intensity={1.75} />
+      <hemisphereLight args={['#fafcff', '#6c7584', 1.25]} />
+      <directionalLight position={[-4, 7, 8]} color="#ffffff" intensity={2.15} />
+      <pointLight position={[5, -2, 5]} color="#dceae5" intensity={9} distance={16} />
+      <pointLight position={[-5, 1, 3]} color="#dfe4f2" intensity={8} distance={15} />
       <CameraRig pointerRef={pointerRef} reducedMotion={reducedMotion} />
       {visibleObjects.map((object) => (
         <FloatingMesh
