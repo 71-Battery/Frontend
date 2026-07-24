@@ -119,9 +119,9 @@ function demoAnswer(question) {
 
 function Brand() {
   return (
-    <div className="main-brand" aria-label="GSM Compass">
+    <div className="main-brand" aria-label="GSM VITA">
       <span><GraduationCap size={21} /></span>
-      <strong>GSM Compass</strong>
+      <strong>GSM VITA</strong>
     </div>
   )
 }

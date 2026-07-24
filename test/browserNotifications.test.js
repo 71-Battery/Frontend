@@ -13,7 +13,7 @@ test('detects a hidden or unfocused page', () => {
   assert.equal(isPageInBackground({ hidden: false, hasFocus: () => true }), false)
 })
 
-test('notifies only while another GSM Compass menu is active', () => {
+test('notifies only while another GSM VITA menu is active', () => {
   assert.equal(shouldNotifyForAnswer({ notificationsEnabled: true, activeView: 'home' }), true)
   assert.equal(shouldNotifyForAnswer({ notificationsEnabled: true, activeView: 'timeline' }), true)
   assert.equal(shouldNotifyForAnswer({ notificationsEnabled: true, activeView: 'chat' }), false)

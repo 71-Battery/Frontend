@@ -1,4 +1,4 @@
-# GSM Compass AWS 인프라 초안
+# GSM VITA AWS 인프라 초안
 
 > 첨부 자료의 `AWS`, `서울(ap-northeast-2)`, `.env`, 제한된 관리자 접근, 월 `$30~40` 조건을 바탕으로 정리한 예시입니다.
 

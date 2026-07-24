@@ -16,9 +16,9 @@ export default function EmailConfirmationPage({ status = 'checking' }) {
           aria-labelledby="email-confirmation-title"
           aria-live="polite"
         >
-          <div className="email-confirmation-brand" aria-label="GSM Compass">
+          <div className="email-confirmation-brand" aria-label="GSM VITA">
             <span><GraduationCap size={21} /></span>
-            <strong>GSM Compass</strong>
+            <strong>GSM VITA</strong>
           </div>
 
           <span className={`email-confirmation-icon${complete ? ' complete' : ''}`}>
