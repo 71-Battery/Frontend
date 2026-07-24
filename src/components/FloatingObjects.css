@@ -1,0 +1,196 @@
+.floating-objects {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.floating-object {
+  position: absolute;
+  display: block;
+  opacity: 0.58;
+  will-change: transform;
+}
+
+.floating-sphere {
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.95) 0 7%, transparent 23%),
+    radial-gradient(circle at 35% 32%, #cfd7ff 0, #8698f5 42%, #5365c8 75%, #34438e 100%);
+  box-shadow:
+    inset -12px -15px 26px rgba(27, 39, 103, 0.28),
+    inset 8px 9px 18px rgba(255, 255, 255, 0.38),
+    0 24px 42px rgba(63, 78, 160, 0.22);
+}
+
+.floating-sphere--one {
+  top: 14%;
+  left: 6%;
+  width: 76px;
+  height: 76px;
+  animation: floating-sphere-one 15s ease-in-out infinite alternate;
+}
+
+.floating-sphere--two {
+  right: 9%;
+  bottom: 12%;
+  width: 48px;
+  height: 48px;
+  opacity: 0.46;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.92) 0 8%, transparent 24%),
+    radial-gradient(circle at 38% 35%, #bdfff0 0, #55d2b4 45%, #238a78 100%);
+  box-shadow:
+    inset -9px -10px 18px rgba(16, 92, 76, 0.24),
+    inset 6px 7px 13px rgba(255, 255, 255, 0.36),
+    0 20px 34px rgba(39, 153, 126, 0.18);
+  animation: floating-sphere-two 12s ease-in-out infinite alternate;
+}
+
+.floating-ring {
+  top: 12%;
+  right: 7%;
+  width: 94px;
+  height: 94px;
+  border: 13px solid rgba(112, 133, 238, 0.58);
+  border-top-color: rgba(178, 193, 255, 0.92);
+  border-right-color: rgba(76, 190, 164, 0.58);
+  border-radius: 50%;
+  box-shadow:
+    inset 5px 6px 10px rgba(255, 255, 255, 0.35),
+    0 20px 34px rgba(61, 76, 153, 0.17);
+  filter: drop-shadow(0 12px 18px rgba(58, 72, 141, 0.12));
+  animation: floating-ring 18s ease-in-out infinite;
+}
+
+.floating-crystal {
+  bottom: 15%;
+  left: 8%;
+  width: 62px;
+  height: 82px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.8), transparent 36%),
+    linear-gradient(145deg, #aab7ff 0%, #7185eb 42%, #4960c8 72%, #32438d 100%);
+  box-shadow:
+    inset -10px -12px 22px rgba(33, 46, 112, 0.27),
+    0 25px 38px rgba(54, 68, 145, 0.2);
+  clip-path: polygon(50% 0, 96% 30%, 77% 100%, 23% 100%, 4% 30%);
+  animation: floating-crystal 16s ease-in-out infinite alternate;
+}
+
+.floating-cube {
+  right: 14%;
+  bottom: 36%;
+  width: 58px;
+  height: 58px;
+  transform-style: preserve-3d;
+  animation: floating-cube 20s ease-in-out infinite;
+}
+
+.floating-cube-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: linear-gradient(145deg, rgba(193, 255, 239, 0.74), rgba(73, 187, 159, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.22);
+  backface-visibility: visible;
+}
+
+.floating-cube-face--front { transform: translateZ(29px); }
+.floating-cube-face--back { transform: rotateY(180deg) translateZ(29px); }
+.floating-cube-face--right { transform: rotateY(90deg) translateZ(29px); }
+.floating-cube-face--left { transform: rotateY(-90deg) translateZ(29px); }
+.floating-cube-face--top { transform: rotateX(90deg) translateZ(29px); }
+.floating-cube-face--bottom { transform: rotateX(-90deg) translateZ(29px); }
+
+.floating-objects--auth .floating-sphere--one {
+  top: 16%;
+  left: 9%;
+}
+
+.floating-objects--auth .floating-ring {
+  top: 14%;
+  right: 10%;
+}
+
+.floating-objects--auth .floating-crystal {
+  bottom: 14%;
+  left: 11%;
+}
+
+.floating-objects--auth .floating-cube {
+  right: 12%;
+  bottom: 20%;
+}
+
+.dashboard-shell[data-theme='dark'] .floating-object {
+  opacity: 0.4;
+  filter: saturate(0.88) brightness(0.82);
+}
+
+@keyframes floating-sphere-one {
+  0% { transform: translate3d(0, 0, 20px) rotate(-8deg); }
+  50% { transform: translate3d(22px, -26px, 70px) rotate(8deg); }
+  100% { transform: translate3d(-8px, 20px, 30px) rotate(-4deg); }
+}
+
+@keyframes floating-sphere-two {
+  0% { transform: translate3d(0, 0, 0) scale(0.92); }
+  100% { transform: translate3d(-28px, -34px, 55px) scale(1.08); }
+}
+
+@keyframes floating-ring {
+  0% { transform: translate3d(0, 0, -10px) rotateX(62deg) rotateZ(0deg); }
+  50% { transform: translate3d(-24px, 28px, 55px) rotateX(72deg) rotateZ(180deg); }
+  100% { transform: translate3d(12px, -10px, 10px) rotateX(62deg) rotateZ(360deg); }
+}
+
+@keyframes floating-crystal {
+  0% { transform: translate3d(0, 0, 20px) rotate(-12deg) rotateY(0deg); }
+  100% { transform: translate3d(24px, -30px, 75px) rotate(7deg) rotateY(180deg); }
+}
+
+@keyframes floating-cube {
+  0% { transform: translate3d(0, 0, -10px) rotateX(-18deg) rotateY(20deg) rotateZ(0deg); }
+  33% { transform: translate3d(26px, -32px, 60px) rotateX(82deg) rotateY(145deg) rotateZ(18deg); }
+  66% { transform: translate3d(-18px, 18px, 35px) rotateX(188deg) rotateY(250deg) rotateZ(42deg); }
+  100% { transform: translate3d(0, 0, -10px) rotateX(342deg) rotateY(380deg) rotateZ(0deg); }
+}
+
+@media (max-width: 900px) {
+  .floating-object { opacity: 0.38; }
+  .floating-cube,
+  .floating-crystal { display: none; }
+  .floating-sphere--one { left: -20px; }
+  .floating-ring { top: 8%; right: -28px; }
+}
+
+@media (max-width: 520px) {
+  .floating-ring { display: none; }
+  .floating-sphere--one {
+    top: 10%;
+    width: 54px;
+    height: 54px;
+  }
+  .floating-sphere--two {
+    right: -12px;
+    bottom: 8%;
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-object {
+    animation: none !important;
+  }
+
+  .floating-ring { transform: rotateX(64deg) rotateZ(24deg); }
+  .floating-crystal { transform: rotate(-9deg); }
+  .floating-cube { transform: rotateX(-18deg) rotateY(28deg); }
+}

@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, GraduationCap, LoaderCircle } from 'lucide-react'
+import FloatingObjects from './components/FloatingObjects.jsx'
 import './AuthPage.css'
 import './EmailConfirmationPage.css'
 
@@ -9,6 +10,7 @@ export default function EmailConfirmationPage({ status = 'checking' }) {
     <div className="auth-page email-confirmation-page">
       <div className="auth-orb auth-orb-one" aria-hidden="true" />
       <div className="auth-orb auth-orb-two" aria-hidden="true" />
+      <FloatingObjects variant="auth" />
 
       <main className="email-confirmation-layout">
         <section

@@ -39,6 +39,7 @@ import {
 } from 'lucide-react'
 import AuthPage from './AuthPage.jsx'
 import EmailConfirmationPage from './EmailConfirmationPage.jsx'
+import FloatingObjects from './components/FloatingObjects.jsx'
 import {
   logout as logoutWithBackend,
   verifyEmailConfirmation,
@@ -1272,6 +1273,7 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   return (
     <div className="dashboard-shell" data-theme={preferences.theme}>
       <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
+      <FloatingObjects />
       <a className="skip-link" href="#main-content">본문으로 바로가기</a>
       <DashboardHeader
         user={user}

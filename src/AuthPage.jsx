@@ -24,6 +24,7 @@ import {
   signup as signupWithBackend,
 } from './api/authApi.js'
 import { createDemoSession } from './api/mockAuthApi.js'
+import FloatingObjects from './components/FloatingObjects.jsx'
 import { getLegalDocument } from './legalDocuments.js'
 import { displayEmail } from './utils/piiMask.js'
 import './AuthPage.css'
@@ -545,6 +546,7 @@ function AuthPage({ onAuthenticated, initialError = '' }) {
     <div className="auth-page">
       <div className="auth-orb auth-orb-one" aria-hidden="true" />
       <div className="auth-orb auth-orb-two" aria-hidden="true" />
+      <FloatingObjects variant="auth" />
 
       <main className="auth-layout">
         <section className="auth-form-area" aria-labelledby="auth-title">
