@@ -16,6 +16,7 @@ export const PLATFORM_ENDPOINTS = Object.freeze({
   adminRules: '/api/admin/rules',
   adminNotices: '/api/admin/notices',
   adminUsers: '/api/admin/users',
+  notifications: '/api/notifications',
   profile: '/api/profile',
   schedules: '/api/schedules',
   notices: '/api/notices',
@@ -111,6 +112,22 @@ export async function getRegulations({ profile, authToken, signal } = {}) {
   return {
     items: normalizeContentResources(getList(data, 'regulations'), RESOURCE_TYPES.RULE, profile),
     meta: { source: 'INTERNAL_DB', ...getMeta(payload, data) },
+  }
+}
+
+export async function getNotifications({ profile, authToken, signal } = {}) {
+  const payload = await apiRequest(PLATFORM_ENDPOINTS.notifications, {
+    authToken,
+    signal,
+  })
+  const data = unwrapData(payload)
+  return {
+    items: normalizeContentResources(
+      getList(data, 'notifications'),
+      RESOURCE_TYPES.NOTICE,
+      profile,
+    ),
+    meta: { source: 'CAMPUS_AI', ...getMeta(payload, data) },
   }
 }
 
@@ -216,7 +233,10 @@ export async function createAdminNotice(notice, { authToken, signal } = {}) {
     signal,
   })
   const data = unwrapData(payload) || {}
-  return data.notice || data
+  return {
+    notice: data.notice || data,
+    notification: data.notification || null,
+  }
 }
 
 export async function getAdminUsers({

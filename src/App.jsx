@@ -64,7 +64,12 @@ import {
   readPreferences,
   savePreferences,
 } from './api/preferencesStore.js'
-import { makeResourceKey, parseResourceKey, RESOURCE_TYPES } from './api/resourceMapper.js'
+import {
+  makeResourceKey,
+  mergeContentResources,
+  parseResourceKey,
+  RESOURCE_TYPES,
+} from './api/resourceMapper.js'
 import { buildCalendarMonth, getCalendarMonths } from './api/calendarMapper.js'
 import {
   getDefaultScheduleRange,
@@ -896,6 +901,7 @@ function TimelineView({
 function NoticesView({
   items,
   noticeState,
+  notificationState,
   regulationState,
   retry,
   isDemo,
@@ -912,17 +918,17 @@ function NoticesView({
   ))
   const selected = filtered.find((notice) => notice.id === selectedId) || filtered[0] || null
   const meta = {
-    source: isDemo ? 'DEMO' : 'INTERNAL_DB',
-    stale: noticeState.meta.stale || regulationState.meta.stale,
+    source: isDemo ? 'DEMO' : notificationState.items.length > 0 ? 'CAMPUS_AI' : 'INTERNAL_DB',
+    stale: noticeState.meta.stale || notificationState.meta.stale || regulationState.meta.stale,
   }
   const status = items.length > 0
     ? 'ready'
-    : noticeState.status === 'loading' || regulationState.status === 'loading'
+    : noticeState.status === 'loading' || notificationState.status === 'loading' || regulationState.status === 'loading'
       ? 'loading'
-      : noticeState.status === 'error' && regulationState.status === 'error'
+      : noticeState.status === 'error' && notificationState.status === 'error' && regulationState.status === 'error'
         ? 'error'
         : 'ready'
-  const combinedError = [noticeState.error, regulationState.error].filter(Boolean).join(' ')
+  const combinedError = [noticeState.error, notificationState.error, regulationState.error].filter(Boolean).join(' ')
 
   useEffect(() => {
     if (selectedResourceId && items.some((item) => item.id === selectedResourceId)) {
@@ -952,6 +958,9 @@ function NoticesView({
             {noticeState.status === 'error' && items.length > 0 && (
               <div className="partial-error"><CircleAlert size={15} />공지 일부를 불러오지 못했어요.<button type="button" onClick={retry}>다시 시도</button></div>
             )}
+            {notificationState.status === 'error' && items.length > 0 && (
+              <div className="partial-error"><CircleAlert size={15} />AI 알림을 불러오지 못했어요.<button type="button" onClick={retry}>다시 시도</button></div>
+            )}
             {regulationState.status === 'error' && items.length > 0 && (
               <div className="partial-error"><CircleAlert size={15} />규정 일부를 불러오지 못했어요.<button type="button" onClick={retry}>다시 시도</button></div>
             )}
@@ -959,13 +968,13 @@ function NoticesView({
               <article className={`notice-row ${selected?.id === notice.id ? 'selected' : ''}`} key={notice.id}>
                 <button className="notice-row-main" type="button" onClick={() => setSelectedId(notice.id)}>
                   <span className="notice-meta">
-                    <em>{notice.type === RESOURCE_TYPES.RULE ? '규정' : '공지'}</em>
+                    <em>{notice.type === RESOURCE_TYPES.RULE ? '규정' : notice.isProactive ? '알림' : '공지'}</em>
                     <em>{notice.category}</em>
                     <small>{notice.date}</small>
                   </span>
                   <strong>{notice.title}</strong>
                   <p>{notice.summary}</p>
-                  <span className="notice-source"><Megaphone size={14} />{notice.department} · {notice.target}</span>
+                  <span className="notice-source">{notice.isProactive ? <Bell size={14} /> : <Megaphone size={14} />}{notice.department} · {notice.target}</span>
                 </button>
                 <SaveButton
                   saved={savedKeys.has(makeResourceKey(notice.type, notice.id))}
@@ -992,16 +1001,22 @@ function NoticesView({
 
         {selected ? (
           <aside className="detail-panel notice-detail glass-panel reveal" aria-labelledby="selected-notice-title">
-            <div className="detail-symbol accent">{selected.type === RESOURCE_TYPES.RULE ? <ShieldCheck size={23} /> : <BookOpenText size={23} />}</div>
-            <p>{selected.type === RESOURCE_TYPES.RULE ? '규정' : '공지'} · {selected.category} · {selected.department}</p>
+            <div className="detail-symbol accent">{selected.type === RESOURCE_TYPES.RULE ? <ShieldCheck size={23} /> : selected.isProactive ? <Bell size={23} /> : <BookOpenText size={23} />}</div>
+            <p>{selected.type === RESOURCE_TYPES.RULE ? '규정' : selected.isProactive ? 'AI 알림' : '공지'} · {selected.category} · {selected.department}</p>
             <h2 id="selected-notice-title">{selected.title}</h2>
-            <span className="detail-description">{selected.content || selected.summary}</span>
+            <span className={`detail-description ${selected.isProactive ? 'proactive' : ''}`}>{selected.isProactive ? selected.summary : selected.content || selected.summary}</span>
             <dl>
               <div><dt>등록일</dt><dd>{selected.date}</dd></div>
               <div><dt>대상</dt><dd>{selected.target}</dd></div>
               <div><dt>버전</dt><dd>v{selected.version}</dd></div>
+              {selected.isProactive && <div><dt>요약 방식</dt><dd>{selected.summaryProvider === 'bedrock' ? 'AI 요약' : '자동 요약'}</dd></div>}
             </dl>
-            <div className="detail-tip"><Sparkles size={17} /><span><strong>추천 이유</strong>{selected.reason}</span></div>
+            <div className="detail-tip"><Sparkles size={17} /><span><strong>{selected.isProactive ? '알림 안내' : '추천 이유'}</strong>{selected.reason}</span></div>
+            {selected.sourceUrl && (
+              <a className="detail-source-link" href={selected.sourceUrl} target="_blank" rel="noreferrer">
+                원문 공지 확인<ArrowRight size={14} />
+              </a>
+            )}
           </aside>
         ) : (
           <aside className="detail-panel glass-panel reveal">
@@ -1111,6 +1126,7 @@ function PrimaryNavigation({
   activeView,
   onChange,
   savedCount,
+  notificationCount = 0,
   canManageUsers = false,
 }) {
   const availableItems = canManageUsers
@@ -1129,6 +1145,7 @@ function PrimaryNavigation({
           <Icon size={17} />
           <span>{label}</span>
           {id === 'saved' && savedCount > 0 && <small>{savedCount}</small>}
+          {id === 'notices' && notificationCount > 0 && <small>{Math.min(notificationCount, 99)}</small>}
         </button>
       ))}
     </nav>
@@ -1144,7 +1161,11 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
   const activeViewRef = useRef(activeView)
   const preferencesRef = useRef(preferences)
   const academic = useAcademicData({ user, authToken })
-  const contentItems = [...academic.notices.items, ...academic.regulations.items].sort((left, right) => (
+  const contentItems = mergeContentResources({
+    notices: academic.notices.items,
+    regulations: academic.regulations.items,
+    notifications: academic.notifications.items,
+  }).sort((left, right) => (
     String(right.publishedAt || right.effectiveFrom).localeCompare(String(left.publishedAt || left.effectiveFrom))
   ))
   const canManageContent = permissions.canManageContent
@@ -1251,6 +1272,7 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
           activeView={activeView}
           onChange={setActiveView}
           savedCount={savedCount}
+          notificationCount={academic.notifications.items.length}
           canManageUsers={canManageUsers}
         />
         {academic.saveError && <div className="global-data-error" role="alert"><CircleAlert size={16} />{academic.saveError}</div>}
@@ -1300,6 +1322,7 @@ function MainDashboard({ session, onLogout, loggingOut = false }) {
               <NoticesView
                 items={contentItems}
                 noticeState={academic.notices}
+                notificationState={academic.notifications}
                 regulationState={academic.regulations}
                 retry={academic.retry}
                 isDemo={isDemo}

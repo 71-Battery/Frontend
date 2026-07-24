@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   getNotices,
+  getNotifications,
   getRegulations,
   getSavedResources,
   getSchedules,
@@ -32,6 +33,12 @@ function demoState(user) {
       error: '',
       meta: { source: 'DEMO' },
     },
+    notifications: {
+      items: [],
+      status: 'ready',
+      error: '',
+      meta: { source: 'DEMO' },
+    },
     regulations: {
       items: normalizeContentResources(demoRegulationRecords, RESOURCE_TYPES.RULE, user),
       status: 'ready',
@@ -55,6 +62,7 @@ export function useAcademicData({ user, authToken }) {
       : {
         schedules: loadingResource(),
         notices: loadingResource(),
+        notifications: loadingResource(),
         regulations: loadingResource(),
         saved: loadingResource(),
       }
@@ -85,6 +93,7 @@ export function useAcademicData({ user, authToken }) {
     setResources((current) => ({
       schedules: { ...current.schedules, status: 'loading', error: '' },
       notices: { ...current.notices, status: 'loading', error: '' },
+      notifications: { ...current.notifications, status: 'loading', error: '' },
       regulations: { ...current.regulations, status: 'loading', error: '' },
       saved: { ...current.saved, status: 'loading', error: '' },
     }))
@@ -119,6 +128,7 @@ export function useAcademicData({ user, authToken }) {
       ...requestOptions,
     }))
     settle('notices', getNotices({ profile: user, ...requestOptions }))
+    settle('notifications', getNotifications({ profile: user, ...requestOptions }))
     settle('regulations', getRegulations({ profile: user, ...requestOptions }))
     settle('saved', getSavedResources(requestOptions))
 

@@ -88,9 +88,15 @@ export default function AdminContentPanel({ authToken, onContentChanged }) {
 
     try {
       if (mode === 'notices') {
-        await createAdminNotice(form, { authToken })
+        const created = await createAdminNotice(form, { authToken })
         setForm(emptyNotice)
-        setMessage('공지가 게시되었습니다.')
+        setMessage(
+          created.notification?.status === 'DELIVERED'
+            ? '공지가 게시되고 AI 알림까지 전달되었습니다.'
+            : created.notification?.status === 'SKIPPED'
+              ? '공지가 게시되었습니다. 이미 처리된 AI 알림은 다시 전송하지 않았습니다.'
+              : '공지가 게시되었습니다. AI 알림은 서버에서 다시 처리할 수 있습니다.',
+        )
       } else if (editingRuleId) {
         const updated = await updateAdminRule(editingRuleId, form, { authToken })
         setRules((current) => current.map((rule) => (

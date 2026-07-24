@@ -77,6 +77,10 @@ export function normalizeContentResource(raw, type, profile) {
     sourceUrl: asText(raw.sourceUrl || raw.source_url) || null,
     version: Number.isInteger(Number(raw.version)) ? Number(raw.version) : 1,
     updatedAt: asText(raw.updatedAt || raw.updated_at),
+    sourceId: asText(raw.sourceId || raw.source_id) || null,
+    isProactive: raw.isProactive === true || raw.is_proactive === true,
+    notified: raw.notified === true,
+    summaryProvider: asText(raw.summaryProvider || raw.summary_provider) || null,
   }
   resource.date = formatDisplayDate(
     resource.publishedAt || resource.effectiveFrom,
@@ -91,6 +95,40 @@ export function normalizeContentResources(rawItems, type, profile) {
   return (Array.isArray(rawItems) ? rawItems : [])
     .map((item) => normalizeContentResource(item, type, profile))
     .filter(Boolean)
+}
+
+export function mergeContentResources({
+  notices = [],
+  regulations = [],
+  notifications = [],
+} = {}) {
+  const matchedNoticeIds = new Set()
+  const matchedNoticeTitles = new Set()
+  const enrichedNotifications = notifications.map((notification) => {
+    const titleKey = notification.title.trim().toLowerCase()
+    const linkedNotice = notices.find((notice) => (
+      (notification.sourceId && notification.sourceId === notice.id) ||
+      notice.title.trim().toLowerCase() === titleKey
+    ))
+    if (!linkedNotice) return notification
+
+    matchedNoticeIds.add(linkedNotice.id)
+    matchedNoticeTitles.add(titleKey)
+    return {
+      ...linkedNotice,
+      ...notification,
+      id: linkedNotice.id,
+      content: linkedNotice.content || notification.content,
+      sourceUrl: linkedNotice.sourceUrl || notification.sourceUrl,
+      isProactive: true,
+    }
+  })
+  const remainingNotices = notices.filter((notice) => (
+    !matchedNoticeIds.has(notice.id) &&
+    !matchedNoticeTitles.has(notice.title.trim().toLowerCase())
+  ))
+
+  return [...enrichedNotifications, ...remainingNotices, ...regulations]
 }
 
 export function normalizeSavedResource(raw) {
