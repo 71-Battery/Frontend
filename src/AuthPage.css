@@ -1197,6 +1197,7 @@
   }
 
   .signup-progress i,
+  .auth-divider::before,
   .auth-divider::after {
     background: rgba(220, 229, 245, 0.12);
   }
